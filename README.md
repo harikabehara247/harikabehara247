@@ -86,9 +86,6 @@ Free, privacy-first tools — no sign-up, and files never leave the user's devic
 
 <div align="center">
 
-<img height="165" src="https://github-readme-stats.vercel.app/api?username=harikabehara247&show_icons=true&hide_border=true&title_color=6A31C0&icon_color=C81B84&text_color=56607C&bg_color=00000000" alt="GitHub stats" />
-<img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=harikabehara247&layout=compact&hide_border=true&title_color=6A31C0&text_color=56607C&bg_color=00000000" alt="Top languages" />
-
 📫 Open to collaborations and freelance projects — reach out through GitHub.
 
 </div>
