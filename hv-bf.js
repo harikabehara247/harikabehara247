@@ -151,16 +151,22 @@
     ov.querySelector('.hvbf-later').addEventListener('click', function () { close('later'); });
     go.addEventListener('click', function () { count('bf_card', 'click_' + pick.replace('bf', 'm')); });
   }
+  /* r82: only a VISIBLE dialog blocks the card (the site's mobile menu keeps aria-modal=true while hidden) */
+  function busy() {
+    return [].some.call(d.querySelectorAll('.ix-sheet.is-open,.ix-hlp.is-open,[aria-modal=true]:not(.hvbf-ov)'), function (el) {
+      if (!el.getClientRects().length) return false; var cs = getComputedStyle(el); return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0.05;
+    });
+  }
   function watch() {
     /* r81 (25 Nov 2026): card after 5 s on the page OR 25% scroll, whichever comes first; desktop exit intent stays as a backup. Once a day. */
     var seen = 0, t0 = Date.now(), fired = false;
-    function fire(why) { if (fired) return; if (d.querySelector('.ix-sheet.is-open,.ix-hlp.is-open,[aria-modal=true]:not(.hvbf-ov)')) return; fired = true; clearInterval(iv); card(why); }
+    function fire(why) { if (fired) return; if (busy()) return; fired = true; clearInterval(iv); card(why); }
     w.addEventListener('scroll', function () { var h = d.documentElement; if ((h.scrollTop + innerHeight) / Math.max(1, h.scrollHeight) >= 0.25 && h.scrollTop > 80) fire('scroll'); }, { passive: true });
     var iv = setInterval(function () { if (d.visibilityState === 'visible') seen++; if (seen >= 5) fire('time'); }, 1000);
     if (matchMedia('(pointer:fine)').matches) d.addEventListener('mouseout', function (e) { if (!e.relatedTarget && e.clientY < 8 && Date.now() - t0 > 3000) fire('exit'); });
   }
   /* r80: right after someone finishes a greeting is the happiest moment: show the card ~8 s later (once a day), unless they are already previewing a premium design */
-  d.addEventListener('ix:created', function () { setTimeout(function () { if (!d.querySelector('.ix-ups-item.is-on') && !d.querySelector('[aria-modal=true]')) card('created'); }, 8000); });
+  d.addEventListener('ix:created', function () { setTimeout(function () { if (!d.querySelector('.ix-ups-item.is-on') && !busy()) card('created'); }, 8000); });
   function start() {
     /* never interrupt someone opening a greeting that was sent to them */
     if (w.IX && w.IX.mode === 'recipient') return;
