@@ -53,6 +53,7 @@
       '.hvbf-prize small{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#a0306b}.hvbf-prize b{font:800 23px/1.2 Inter,system-ui,sans-serif;margin:4px 0}.hvbf-prize span{font-size:13px;color:#4a4270}' +
       '.hvbf-scratch canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;transition:opacity .45s}.hvbf-scratch.is-revealed canvas{opacity:0;pointer-events:none}' +
       '.hvbf-tap{position:absolute;right:10px;bottom:8px;border:0;border-radius:999px;background:rgba(27,20,64,.7);color:#fff;font:600 12px Inter,system-ui,sans-serif;padding:5px 11px;cursor:pointer}.hvbf-scratch.is-revealed .hvbf-tap,.hvbf-scratch.is-scratching .hvbf-tap{display:none}' +
+      '.hvbf-scratch{transition:height .4s ease}.hvbf-scratch.is-revealed{height:104px}.hvbf-cd.is-small b{font-size:15px}.hvbf-cd.is-small span{padding:4px}.hvbf-cd.is-small small{font-size:10px}' +
       '.hvbf-scratch.is-revealed .hvbf-prize b{animation:hvbfPop .6s cubic-bezier(.2,1.6,.4,1)}@keyframes hvbfPop{0%{transform:scale(.7)}100%{transform:scale(1)}}' +
       '.hvbf-more.is-in{animation:hvbfIn .45s ease both}@keyframes hvbfIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}.hvbf-conf{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}' +
       '.hvbf-perks li{padding:9px 11px}.hvbf-perks b{font-size:13.5px}.hvbf-perks span{font-size:12px}.hvbf-plan{padding:12px 4px 9px}.hvbf-plan b{font-size:19px}.hvbf-plan small{font-size:11.5px}' +
@@ -92,7 +93,7 @@
     var ov = d.createElement('div'); ov.className = 'hvbf-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'hvbf-h');
     ov.innerHTML = '<div class="hvbf-card"><button class="hvbf-x" type="button" aria-label="Close">×</button>' +
       '<span class="hvbf-k">🎁 Black Friday surprise</span><h2 id="hvbf-h">Scratch to reveal your offer</h2>' +
-      '<div class="hvbf-scratch"><div class="hvbf-prize"><small>You unlocked</small><b>12 months of Premium for ₹499</b><span>the price of <s>1 month</s> of our top plan · or from ₹199</span></div>' +
+      '<div class="hvbf-scratch"><div class="hvbf-prize"><small>You unlocked</small><b>12 months of Premium for ₹499</b><span>the price of 1 month of our top plan · or from ₹199</span></div>' +
       '<canvas aria-hidden="true"></canvas><button type="button" class="hvbf-tap">Tap to reveal</button></div>' +
       '<div class="hvbf-cd" aria-label="Time left in the sale"><span><b data-u="d">0</b><small>days</small></span><span><b data-u="h">00</b><small>hrs</small></span><span><b data-u="m">00</b><small>mins</small></span><span><b data-u="s">00</b><small>secs</small></span></div>' +
       '<div class="hvbf-more" hidden><ul class="hvbf-perks">' + PERKS.map(function (p) { return '<li><i aria-hidden="true">' + p[0] + '</i><div><b>' + p[1] + '</b><span>' + p[2] + '</span></div></li>'; }).join('') + '</ul>' +
@@ -126,8 +127,8 @@
     function at(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr]; }
     function scratch(e) {
       if (!down || revealed) return; e.preventDefault(); var p = at(e);
-      cx.globalCompositeOperation = 'destination-out'; cx.beginPath(); cx.arc(p[0], p[1], 24 * dpr, 0, Math.PI * 2); cx.fill(); cx.globalCompositeOperation = 'source-over';
-      if (++moves % 8 === 0) { var data = cx.getImageData(0, 0, cv.width, cv.height).data, clear = 0, n = 0; for (var i = 3; i < data.length; i += 64) { n++; if (data[i] === 0) clear++; } if (clear / n > .42) reveal('scratch'); }
+      cx.globalCompositeOperation = 'destination-out'; cx.beginPath(); cx.arc(p[0], p[1], 28 * dpr, 0, Math.PI * 2); cx.fill(); cx.globalCompositeOperation = 'source-over';
+      if (++moves % 8 === 0) { var data = cx.getImageData(0, 0, cv.width, cv.height).data, clear = 0, n = 0; for (var i = 3; i < data.length; i += 64) { n++; if (data[i] === 0) clear++; } if (clear / n > .35) reveal('scratch'); }
     }
     cv.addEventListener('pointerdown', function (e) { down = true; try { cv.setPointerCapture(e.pointerId); } catch (x) {} box.classList.add('is-scratching'); scratch(e); });
     cv.addEventListener('pointermove', scratch);
@@ -137,7 +138,7 @@
       if (revealed) return; revealed = true; box.classList.add('is-revealed'); count('bf_card', 'reveal_' + how);
       ov.querySelector('#hvbf-h').textContent = 'Your Black Friday offer is unlocked!';
       confetti(cardEl);
-      setTimeout(function () { more.hidden = false; more.classList.add('is-in'); go.focus({ preventScroll: true }); }, 380);
+      setTimeout(function () { more.hidden = false; more.classList.add('is-in'); ov.querySelector('.hvbf-cd').classList.add('is-small'); go.focus({ preventScroll: true }); setTimeout(function () { try { go.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (x) {} }, 450); }, 380);
     }
     var cd = {}; ov.querySelectorAll('[data-u]').forEach(function (b) { cd[b.getAttribute('data-u')] = b; });
     function tick() { var l = left(); cd.d.textContent = l.d; cd.h.textContent = pad(l.h); cd.m.textContent = pad(l.m); cd.s.textContent = pad(l.s); }
