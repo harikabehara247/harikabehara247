@@ -1,6 +1,6 @@
 /* H View Black Friday sale (r78, 25 Nov 2026): a slim strip at the top of every page and one well-timed offer card.
  * Loaded by app.php only while the sale runs (setting bf_until) and never for paying members.
- * Card rules: never on arrival; after ~20 s of reading plus some scrolling, or when a desktop visitor heads for the tabs;
+ * Card rules: after 5 s on the page or 25% scroll (whichever first), or when a desktop visitor heads for the tabs;
  * at most once a day; one tap to close; centred card on desktop, bottom sheet on phones (no full-screen cover).
  * Views, clicks and closes are counted in hv_cta_clicks (placement bf_strip / bf_card) via /whatsapp/cta. */
 (function () {
@@ -9,7 +9,7 @@
   if (w.__hvBf || /^\/(account|admin|business)\//.test(path)) return; w.__hvBf = 1;
   var END = new Date('2026-11-30T23:59:59+05:30').getTime();
   if (Date.now() > END) return;
-  var URL = '/account/plan/?from=bf';
+  var URL = '/account/checkout/?from=bf';
   var PLANS = [
     { k: 'bf3', m: 3, p: 199 }, { k: 'bf6', m: 6, p: 299, tag: 'Popular' },
     { k: 'bf8', m: 8, p: 399 }, { k: 'bf12', m: 12, p: 499, tag: 'Best value' }
@@ -152,15 +152,15 @@
     go.addEventListener('click', function () { count('bf_card', 'click_' + pick.replace('bf', 'm')); });
   }
   function watch() {
-    /* card: ~20 s of visible reading plus 30% scroll (or 45 s on short pages), or desktop exit intent after 10 s */
-    var seen = 0, deep = false, t0 = Date.now();
-    w.addEventListener('scroll', function () { var h = d.documentElement; if ((h.scrollTop + innerHeight) / Math.max(1, h.scrollHeight) > 0.3) deep = true; }, { passive: true });
-    var iv = setInterval(function () {
-      if (d.visibilityState !== 'visible' || d.querySelector('.ix-sheet.is-open,.ix-hlp.is-open,[aria-modal=true]:not(.hvbf-ov)')) return;
-      seen++; if ((seen >= 20 && deep) || seen >= 45) { clearInterval(iv); card('time'); }
-    }, 1000);
-    if (matchMedia('(pointer:fine)').matches) d.addEventListener('mouseout', function (e) { if (!e.relatedTarget && e.clientY < 8 && Date.now() - t0 > 10000) { clearInterval(iv); card('exit'); } });
+    /* r81 (25 Nov 2026): card after 5 s on the page OR 25% scroll, whichever comes first; desktop exit intent stays as a backup. Once a day. */
+    var seen = 0, t0 = Date.now(), fired = false;
+    function fire(why) { if (fired) return; if (d.querySelector('.ix-sheet.is-open,.ix-hlp.is-open,[aria-modal=true]:not(.hvbf-ov)')) return; fired = true; clearInterval(iv); card(why); }
+    w.addEventListener('scroll', function () { var h = d.documentElement; if ((h.scrollTop + innerHeight) / Math.max(1, h.scrollHeight) >= 0.25 && h.scrollTop > 80) fire('scroll'); }, { passive: true });
+    var iv = setInterval(function () { if (d.visibilityState === 'visible') seen++; if (seen >= 5) fire('time'); }, 1000);
+    if (matchMedia('(pointer:fine)').matches) d.addEventListener('mouseout', function (e) { if (!e.relatedTarget && e.clientY < 8 && Date.now() - t0 > 3000) fire('exit'); });
   }
+  /* r80: right after someone finishes a greeting is the happiest moment: show the card ~8 s later (once a day), unless they are already previewing a premium design */
+  d.addEventListener('ix:created', function () { setTimeout(function () { if (!d.querySelector('.ix-ups-item.is-on') && !d.querySelector('[aria-modal=true]')) card('created'); }, 8000); });
   function start() {
     /* never interrupt someone opening a greeting that was sent to them */
     if (w.IX && w.IX.mode === 'recipient') return;
