@@ -113,6 +113,22 @@ body.open .curtain.l{transform:translateX(-96%)}body.open .curtain.r{transform:t
 .blowbtn{position:relative;margin-top:auto;margin-bottom:calc(70px + env(safe-area-inset-bottom));width:108px;height:108px;border-radius:50%;border:1.5px solid rgba(247,226,160,.8);background:rgba(20,10,18,.45);backdrop-filter:blur(4px);color:#fbe9c0;font:700 12px/1.2 Inter;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;touch-action:none;-webkit-touch-callout:none;user-select:none}
 .blowbtn svg{position:absolute;inset:-6px;width:120px;height:120px;transform:rotate(-90deg)}.blowbtn circle{fill:none;stroke:#f7e2a0;stroke-width:4;stroke-dasharray:352;stroke-dashoffset:352;stroke-linecap:round}
 img,.bg{-webkit-touch-callout:none;-webkit-user-drag:none}
+
+/* r85: three more openings (HV.theme = sparkler | lantern | popwall) */
+#mist{position:absolute;inset:0;z-index:9;width:100%;height:100%;touch-action:none;cursor:pointer}
+#wr{position:absolute;inset:0;z-index:5;width:100%;height:100%;pointer-events:none}
+.lan{position:absolute;bottom:14%;width:clamp(46px,11vw,72px);aspect-ratio:.78;z-index:8;cursor:pointer;transition:transform 4.5s cubic-bezier(.3,.1,.3,1),opacity 1.2s;animation:lsway 3s ease-in-out infinite}
+.lan:before{content:'';position:absolute;inset:0;border-radius:42% 42% 30% 30%/46% 46% 32% 32%;background:radial-gradient(ellipse at 50% 62%,#fff4c7 0%,#ffc867 28%,#f29a3a 62%,#b85a1c 100%);box-shadow:0 0 30px 10px rgba(255,170,70,.55),0 0 80px 30px rgba(255,150,60,.25);opacity:.55;transition:opacity .5s}
+.lan:after{content:'';position:absolute;left:30%;right:30%;bottom:-5%;height:9%;border-radius:2px;background:#6b3a14}
+.lan.lit:before{opacity:1}.lan.lit{animation:none}
+.lan b{position:absolute;inset:0;display:grid;place-items:center;font:800 clamp(18px,4.6vw,28px) 'Playfair Display',serif;color:#6b2e0e;opacity:0;transition:opacity .4s}
+.lan.lit b{opacity:.85}
+@keyframes lsway{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+.skyname{position:absolute;top:14%;left:0;right:0;display:flex;justify-content:center;z-index:7}
+.wall{position:absolute;inset:0;z-index:8}
+.wb{position:absolute;aspect-ratio:.401;background-repeat:no-repeat;background-size:385% auto;cursor:pointer;filter:drop-shadow(0 8px 10px rgba(0,0,0,.35));transform-origin:50% 40%;animation:wbob 3.2s ease-in-out infinite}
+.wb.p{background-position:12% 50.7%}.wb.g{background-position:50% 50.7%}.wb.c{background-position:87.9% 50.7%}
+.wb.pop{animation:popb .3s forwards}@keyframes wbob{50%{transform:translateY(-5px) rotate(2deg)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
 </style>
 </head>
@@ -123,10 +139,13 @@ img,.bg{-webkit-touch-callout:none;-webkit-user-drag:none}
   <div class="bg kb" id="bgRoom"><div class="blur"></div><div class="ph"></div></div>
   <div class="bg kb" id="bgCake"><div class="blur"></div><div class="ph"></div></div>
   <div class="bg kb" id="bgGarden"><div class="blur"></div><div class="ph"></div></div>
-  <canvas id="spark"></canvas><div class="shade"></div>
+  <canvas id="spark"></canvas><canvas id="wr"></canvas><div class="shade"></div>
   <div class="gift" id="gift" hidden><div class="ring"></div></div><div class="flash" id="flash"></div>
 
   <section class="layer" id="L0"><div style="position:absolute;top:9%;left:0;right:0"><p class="cap" id="L0c"></p><p class="sub">A surprise is inside. Tap the gift!</p></div></section>
+  <section class="layer" id="LS"><div style="position:absolute;top:9%;left:0;right:0;z-index:10;pointer-events:none"><p class="cap" id="LSc"></p><p class="sub" id="LSs"></p></div><canvas id="mist"></canvas></section>
+  <section class="layer" id="LL"><div class="skyname" id="skyname"></div><div id="lans"></div><div style="position:absolute;bottom:13%;left:0;right:0;pointer-events:none;z-index:9"><p class="cap" id="LLc"></p></div></section>
+  <section class="layer" id="LW"><div class="wall" id="wall"></div><div class="namebox" id="wname" style="z-index:5"></div></section>
   <section class="layer" id="L1"><div class="namebox" id="namebox"></div><div id="rbs"></div>
     <div style="position:absolute;bottom:13%;left:0;right:0"><p class="cap" id="L1c"></p></div></section>
   <section class="layer" id="L2"><div class="big4" id="big4"></div><p class="cap" style="margin-top:2vh" id="L2c"></p><p class="sub" id="L2s"></p></section>
@@ -264,11 +283,64 @@ function act4() { bg('bgCake'); show('L4'); $('#L4n').textContent = NAME; sparkO
 
 function act5() { bg('bgRoom', true); show('L5'); $('#L5a').textContent = 'Happy ' + AGE + ORD + ' Birthday'; $('#L5n').textContent = NAME; $('#L5m').textContent = MSG; $('#L5f').textContent = FROM ? 'with love, ' + FROM : '';
   if (music) music.volume = .15; var t = song(), k = 0; (function shot() { cannon(innerWidth * (k % 2 ? .1 : .9), innerHeight * .95, k % 2 ? 1 : -1, 60); if (++k < 6) later(shot, 900); })(); later(function () { cannon(innerWidth / 2, innerHeight, 0, 160); if (music) music.volume = .35; }, t * 1000); POST('done'); }
-$('#again').onclick = function (e) { e.stopPropagation(); act0(); };
+
+/* ================= r85 openings ================= */
+var THEME = String(HV.theme || 'royal');
+function nameLetters() { return NAME.toUpperCase().split(''); }
+function foilRow(box, size, hidden) { box.innerHTML = ''; return nameLetters().map(function (ch, i) { var s = d.createElement('div'); s.className = 'nl' + (hidden && ch !== ' ' ? ' wait' : ''); s.style.setProperty('--dot', Math.round(size * .38) + 'px'); s.innerHTML = ch === ' ' ? '<div style="width:' + size * .3 + 'px"></div>' : foilText(ch, size, 'gGold'); box.appendChild(s); later(function () { s.classList.add('in'); }, 150 + i * 110); return s; }); }
+function nameSize() { return Math.max(26, Math.min(86, (innerWidth - 28) / (NAME.length * .76))); }
+
+/* 1. Sparkler Night: wipe the misty window, then a sparkler writes her name in light */
+function sparklerOpen() { d.body.classList.add('lit'); bg('bgCake', true); show('LS'); $('#LSc').innerHTML = 'Psst, <i>' + NAME.replace(/</g, '') + '</i>…'; $('#LSs').textContent = 'Wipe the misty window with your finger'; say('Rub the window ✨');
+  var c = $('#mist'), x = c.getContext('2d'), W, H, rubbing = false, n = 0, done = false;
+  function paint() { W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr; var g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, 'rgba(235,228,232,.93)'); g.addColorStop(1, 'rgba(205,195,205,.9)'); x.globalCompositeOperation = 'source-over'; x.fillStyle = g; x.fillRect(0, 0, W, H);
+    for (var i = 0; i < 1600; i++) { x.fillStyle = 'rgba(255,255,255,' + Math.random() * .35 + ')'; x.beginPath(); x.arc(Math.random() * W, Math.random() * H, (Math.random() * 2.2 + .4) * dpr, 0, 7); x.fill(); }
+    x.fillStyle = 'rgba(120,100,120,.35)'; x.font = '600 ' + 18 * dpr + 'px Inter'; x.textAlign = 'center'; x.fillText('☁  rub here  ☁', W / 2, H * .55); }
+  paint(); c.style.pointerEvents = 'auto';
+  function rub(e) { if (!rubbing || done) return; var r = c.getBoundingClientRect(), px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr; x.globalCompositeOperation = 'destination-out'; var g = x.createRadialGradient(px, py, 0, px, py, 46 * dpr); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, 46 * dpr, 0, 7); x.fill();
+    if (Math.random() < .25) noise(.08, 3000, .03); if (++n % 10 === 0) { var dd = x.getImageData(0, 0, W, H).data, cl = 0, k = 0; for (var i = 3; i < dd.length; i += 160) { k++; if (dd[i] < 40) cl++; } if (cl / k > .38) clear(); } }
+  function clear() { if (done) return; done = true; say(''); c.style.transition = 'opacity 1.2s'; c.style.opacity = 0; chime(); bg('bgCake', true); later(function () { x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); c.style.transition = ''; c.style.opacity = 1; c.style.pointerEvents = 'none'; writeName(); }, 1300); }
+  c.onpointerdown = function (e) { rubbing = true; try { c.setPointerCapture(e.pointerId); } catch (z) {} rub(e); }; c.onpointermove = rub; c.onpointerup = c.onpointercancel = function () { rubbing = false; };
+  if (auto) { var t = 0; var iv = setInterval(function () { rubbing = true; for (var j = 0; j < 30; j++) rub({ clientX: Math.random() * innerWidth, clientY: Math.random() * innerHeight }); if (++t > 14) { clearInterval(iv); clear(); } }, 120); }
+}
+function writeName() { show('LS'); $('#LSc').innerHTML = ''; $('#LSs').textContent = ''; var c = $('#wr'), x = c.getContext('2d'), W = c.width = innerWidth * dpr, H = c.height = innerHeight * dpr, fs = Math.min(W * .9 / (NAME.length * .48), 150 * dpr), y = H * .42, sparks = [], t0 = performance.now(), dur = 2600 + NAME.length * 160;
+  x.font = fs + 'px "Great Vibes", cursive'; var tw = x.measureText(NAME).width, x0 = (W - tw) / 2; startMusic();
+  (function frame(t) { var k = Math.min(1, (t - t0) / dur); x.clearRect(0, 0, W, H);
+    x.save(); x.beginPath(); x.rect(0, 0, x0 + tw * k + 4, H); x.clip(); x.font = fs + 'px "Great Vibes", cursive'; x.shadowColor = 'rgba(255,200,110,.95)'; x.shadowBlur = 26 * dpr; x.fillStyle = '#fff2c9'; x.fillText(NAME, x0, y); x.shadowBlur = 8 * dpr; x.fillStyle = '#ffffff'; x.fillText(NAME, x0, y); x.restore();
+    if (k < 1) { var hx = x0 + tw * k, hy = y - fs * (.25 + .2 * Math.sin(k * 40)); for (var i = 0; i < 9; i++) { var a = Math.random() * 7, v = (1 + Math.random() * 5) * dpr; sparks.push({ x: hx, y: hy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, l: 0 }); } if (Math.random() < .5) noise(.05, 4000, .02); }
+    x.globalCompositeOperation = 'lighter'; sparks = sparks.filter(function (p) { p.vy += .15 * dpr; p.x += p.vx; p.y += p.vy; p.l++; x.strokeStyle = 'rgba(255,' + (190 + Math.random() * 60 | 0) + ',120,' + (1 - p.l / 26) + ')'; x.lineWidth = 1.5 * dpr; x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(p.x - p.vx * 2, p.y - p.vy * 2); x.stroke(); return p.l < 26; }); x.globalCompositeOperation = 'source-over';
+    if (k < 1 || sparks.length) requestAnimationFrame(frame); else { chime(); $('#LSs').textContent = 'It’s your birthday!'; later(function () { say('Tap anywhere ✨'); onTap(function () { x.clearRect(0, 0, W, H); act2(); }, 2200); }, 900); } })(t0);
+}
+
+/* 2. Lantern Wishes: tap each lantern to light it and send it up with a letter; hold to make a wish */
+function lanternOpen() { d.body.classList.add('lit'); bg('bgGarden', true); later(function () { bg('bgRoom', true); }, 10); setBg('bgRoom', 'inv-bday-07-dinner.webp'); bg('bgRoom', true); show('LL'); startMusic();
+  var box = $('#lans'), sky = $('#skyname'); box.innerHTML = ''; var size = nameSize() * .9, row = foilRow(sky, size, true), L = nameLetters(), need = 0, got = 0;
+  $('#LLc').innerHTML = 'Light the wish lanterns'; say('Tap each lantern 🏮');
+  L.forEach(function (ch, i) { if (ch === ' ') return; need++; var el = d.createElement('div'); el.className = 'lan'; el.innerHTML = '<b>' + ch + '</b>'; var cols = Math.min(5, need + 4), xx = 8 + ((i * 37) % 80); el.style.left = xx + '%'; el.style.bottom = (22 + (i % 3) * 9) + '%'; el.style.animationDelay = (i * .3) + 's'; box.appendChild(el);
+    var light = function (e) { if (e) e.stopPropagation(); if (el.classList.contains('lit')) return; el.classList.add('lit'); chime(); tone(523 + i * 40, 0, .8, 'sine', .05);
+      later(function () { var r = row[i].getBoundingClientRect(), me = el.getBoundingClientRect(); el.style.transform = 'translate(' + (r.left + r.width / 2 - (me.left + me.width / 2)) + 'px,' + (r.top + r.height / 2 - (me.top + me.height / 2)) + 'px) scale(.6)'; el.style.opacity = 0; later(function () { row[i].classList.remove('wait'); cannon(r.left + r.width / 2, r.top + r.height, 0, 14); }, 3800); }, 500);
+      if (++got >= need) later(function () { $('#LLc').innerHTML = 'Happy birthday, <i>' + NAME.replace(/</g, '') + '</i>!'; cannon(0, innerHeight * .9, 1, 80); cannon(innerWidth, innerHeight * .9, -1, 80); swell(); later(function () { say('Tap anywhere ✨'); onTap(function () { setBg('bgRoom', 'inv-bday-04-room.webp'); act2(); }, 2400); }, 1600); }, 4800); };
+    el.addEventListener('pointerdown', light); if (auto) later(light, 1500 + i * 500); });
+}
+
+/* 3. Balloon Wall: a wall of real balloons hides the party; pop them to uncover it */
+function popwallOpen() { d.body.classList.add('lit'); bg('bgRoom'); show('LW'); var w = $('#wall'); w.innerHTML = ''; var row = foilRow($('#wname'), nameSize(), false), W = innerWidth, H = innerHeight, bw = Math.max(70, Math.min(120, W / 5.2)), bh = bw / .401, popped = 0, list = [], k = ['p', 'g', 'c'];
+  $('#wname').style.opacity = 0; say('Pop the balloons! 🎈');
+  for (var yy = -bh * .15, r = 0; yy < H; yy += bh * .42, r++) for (var xx = -bw * .3 + (r % 2) * bw * .45; xx < W; xx += bw * .82) { var b = d.createElement('div'); b.className = 'wb ' + k[(r * 7 + Math.round(xx)) % 3]; b.style.width = bw + 'px'; b.style.left = xx + 'px'; b.style.top = yy + 'px'; b.style.zIndex = 8 + r; b.style.animationDelay = (Math.random() * 3) + 's'; b.style.backgroundImage = 'url(' + A + 'inv-bday-08-balloons-cut.webp)'; w.appendChild(b); list.push(b); }
+  var total = list.length, finished = false;
+  function popB(b, quiet) { if (b.classList.contains('pop')) return; b.classList.add('pop'); if (!quiet) { pop(); var r = b.getBoundingClientRect(); cannon(r.left + r.width / 2, r.top + r.height * .3, 0, 10); } popped++;
+    if (!finished && popped / total > .45) { finished = true; say(''); list.forEach(function (o, j) { later(function () { popB(o, j % 4); }, j * 25); }); later(function () { $('#wname').style.opacity = 1; $('#wname').style.transition = 'opacity .6s'; chime(); swell(); cannon(0, H * .9, 1, 80); cannon(W, H * .9, -1, 80); later(function () { say('Tap anywhere ✨'); onTap(act2, 2400); }, 2000); }, list.length * 25 + 300); } }
+  w.onpointerdown = function (e) { var b = e.target.closest('.wb'); if (b) popB(b); };
+  w.onpointermove = function (e) { if (e.buttons || e.pointerType === 'touch') { var el = d.elementFromPoint(e.clientX, e.clientY); if (el && el.classList.contains('wb')) popB(el); } };
+  if (auto) list.forEach(function (b, j) { if (j % 2) later(function () { popB(b); }, 1200 + j * 90); });
+}
+function first() { if (THEME === 'sparkler') sparklerOpen(); else if (THEME === 'lantern') lanternOpen(); else if (THEME === 'popwall') popwallOpen(); else act0(); }
+
+$('#again').onclick = function (e) { e.stopPropagation(); if (THEME === 'lantern') setBg('bgRoom', 'inv-bday-04-room.webp'); first(); };
 $('#zoom').onclick = function () { this.classList.remove('on'); };
-function begin() { var st = $('#start'); st.classList.add('on'); tone(180, 0, .05, 'square', .08); ac(); if (AC && AC.state === 'suspended') AC.resume(); setTimeout(function () { st.style.transition = 'opacity .6s'; st.style.opacity = 0; setTimeout(function () { st.remove(); }, 600); act0(); }, 350); }
-if (auto) { $('#start').remove(); act0(); } else $('#start').onclick = begin;
-['inv-bday-02-open', 'inv-bday-04-room', 'inv-bday-05-cake', 'inv-bday-06-games', 'inv-bday-08-balloons-cut', 'inv-bday-09-frame-cut'].forEach(function (n) { var im = new Image(); im.src = A + n + '.webp'; });
+function begin() { var st = $('#start'); st.classList.add('on'); tone(180, 0, .05, 'square', .08); ac(); if (AC && AC.state === 'suspended') AC.resume(); setTimeout(function () { st.style.transition = 'opacity .6s'; st.style.opacity = 0; setTimeout(function () { st.remove(); }, 600); first(); }, 350); }
+if (auto) { $('#start').remove(); first(); } else $('#start').onclick = begin;
+['inv-bday-02-open', 'inv-bday-04-room', 'inv-bday-05-cake', 'inv-bday-06-games', 'inv-bday-07-dinner', 'inv-bday-08-balloons-cut', 'inv-bday-09-frame-cut'].forEach(function (n) { var im = new Image(); im.src = A + n + '.webp'; });
 })();
 </script>
 </body>
