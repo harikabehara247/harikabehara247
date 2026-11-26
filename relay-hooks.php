@@ -12,7 +12,7 @@ function relay_rupees($paise) { return number_format($paise / 100, 2, '.', ''); 
 /* ₹49 single-greeting unlock (hv_ix_orders, package 'unlock') */
 $GLOBALS['RELAY_UNLOCK']['ix_unlock'] = function (PDO $pdo, array $p, array $m) {
     $q = $pdo->prepare("SELECT * FROM hv_ix_orders WHERE id=? LIMIT 1"); $q->execute([(int)$p['ref_id']]); $o = $q->fetch(PDO::FETCH_ASSOC); if (!$o) return false;
-    $now = date('Y-m-d H:i:s'); $ref = $m['ref'] ?: ($o['upi_ref'] ?: null);
+    $now = gmdate('Y-m-d H:i:s'); $ref = $m['ref'] ?: ($o['upi_ref'] ?: null);
     $pdo->prepare("UPDATE hv_ix_orders SET payment_status='verified', status='paid', upi_ref=COALESCE(upi_ref, ?), upi_ref_at=COALESCE(upi_ref_at, ?), verified_by='bank relay', verified_at=?, updated_at=? WHERE id=?")->execute([$ref, $now, $now, $now, $o['id']]);
     if (preg_match('/wish:([A-Za-z0-9]{10})/', (string)$o['requirements'], $wm)) $pdo->prepare("UPDATE hv_ix_experiences SET status='active' WHERE token=? AND status='awaiting'")->execute([$wm[1]]);
     try { $pdo->prepare('INSERT INTO hv_ix_order_log (order_id, action, detail, user_name, created_at) VALUES (?,?,?,?,?)')->execute([$o['id'], 'payment received (bank relay)', '₹' . relay_rupees($m['paise']) . ($m['ref'] ? ' · Ref ' . $m['ref'] : '') . ($m['payer'] ? ' · from ' . $m['payer'] : '') . ' · greeting opened', 'bank relay', $now]); } catch (Throwable $e) {}

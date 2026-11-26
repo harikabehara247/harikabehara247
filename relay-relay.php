@@ -21,7 +21,7 @@ const RELAY_GRACE_MIN = 120;      /* a credit may arrive this late (phone offlin
 const RELAY_SKEW = 300;           /* signature timestamp window, seconds */
 const RELAY_DUP_MIN = 10;         /* SMS and notification for the same amount within this = one payment */
 
-function relay_now() { return date('Y-m-d H:i:s'); }
+function relay_now() { return gmdate('Y-m-d H:i:s'); }
 function relay_my(PDO $pdo) { return $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql'; }
 function relay_set(PDO $pdo, $k, $d = '') { if (relay_my($pdo)) { $s = $pdo->prepare('SELECT setting_value FROM hv_settings WHERE setting_key=?'); $s->execute([$k]); $v = $s->fetchColumn(); return ($v === false || $v === null) ? $d : $v; } try { $s = $pdo->prepare('SELECT v FROM hv_relay_kv WHERE k=?'); $s->execute([$k]); $v = $s->fetchColumn(); return $v === false ? $d : $v; } catch (Throwable $e) { return $d; } }
 function relay_put(PDO $pdo, $k, $v) { if (relay_my($pdo)) { $pdo->prepare('INSERT INTO hv_settings (setting_key, setting_value, updated_at) VALUES (?,?,NOW()) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value), updated_at=NOW()')->execute([$k, (string)$v]); return; } $pdo->prepare('DELETE FROM hv_relay_kv WHERE k=?')->execute([$k]); $pdo->prepare('INSERT INTO hv_relay_kv (k,v) VALUES (?,?)')->execute([$k, (string)$v]); }
@@ -63,23 +63,23 @@ function relay_parse($body, $sender = '') {
 }
 
 /* ---------------------------------------------------------------- unique amounts */
-function relay_expire(PDO $pdo) { $pdo->prepare("UPDATE hv_relay_pending SET status='expired' WHERE status='pending' AND expires_at < ?")->execute([date('Y-m-d H:i:s', time() - RELAY_GRACE_MIN * 60)]); }
+function relay_expire(PDO $pdo) { $pdo->prepare("UPDATE hv_relay_pending SET status='expired' WHERE status='pending' AND expires_at < ?")->execute([gmdate('Y-m-d H:i:s', time() - RELAY_GRACE_MIN * 60)]); }
 /* returns the amount in paise the customer must pay, unique among open orders (₹49.01 … ₹49.99) */
 function relay_reserve(PDO $pdo, $kind, $refId, $code, $rupees, $utr = null) {
     relay_install($pdo); relay_expire($pdo);
     $s = $pdo->prepare("SELECT paise FROM hv_relay_pending WHERE code=? AND kind=? AND status='pending' ORDER BY id DESC LIMIT 1"); $s->execute([$code, $kind]);
-    if (($p = $s->fetchColumn()) !== false) { $pdo->prepare("UPDATE hv_relay_pending SET expires_at=? WHERE code=? AND kind=? AND status='pending'")->execute([date('Y-m-d H:i:s', time() + RELAY_WINDOW_MIN * 60), $code, $kind]); return (int)$p; }
+    if (($p = $s->fetchColumn()) !== false) { $pdo->prepare("UPDATE hv_relay_pending SET expires_at=? WHERE code=? AND kind=? AND status='pending'")->execute([gmdate('Y-m-d H:i:s', time() + RELAY_WINDOW_MIN * 60), $code, $kind]); return (int)$p; }
     $base = (int)round($rupees) * 100;
     $u = $pdo->prepare("SELECT paise FROM hv_relay_pending WHERE status='pending' AND paise BETWEEN ? AND ?"); $u->execute([$base, $base + 99]);
     $used = array_flip(array_map('intval', $u->fetchAll(PDO::FETCH_COLUMN)));
     /* also avoid amounts that arrived recently without a match (a late payer for an expired order) */
-    $r = $pdo->prepare("SELECT paise FROM hv_relay_msgs WHERE status='unmatched' AND paise BETWEEN ? AND ? AND created_at > ?"); $r->execute([$base, $base + 99, date('Y-m-d H:i:s', time() - 6 * 3600)]);
+    $r = $pdo->prepare("SELECT paise FROM hv_relay_msgs WHERE status='unmatched' AND paise BETWEEN ? AND ? AND created_at > ?"); $r->execute([$base, $base + 99, gmdate('Y-m-d H:i:s', time() - 6 * 3600)]);
     foreach ($r->fetchAll(PDO::FETCH_COLUMN) as $x) $used[(int)$x] = 1;
     $free = []; for ($i = 1; $i <= 99; $i++) if (!isset($used[$base + $i])) $free[] = $base + $i;
     if (!$free) return null;
     $paise = $free[random_int(0, count($free) - 1)];
     $pdo->prepare('INSERT INTO hv_relay_pending (kind, ref_id, code, paise, utr, created_at, expires_at) VALUES (?,?,?,?,?,?,?)')
-        ->execute([$kind, (int)$refId, (string)$code, $paise, $utr ?: null, relay_now(), date('Y-m-d H:i:s', time() + RELAY_WINDOW_MIN * 60)]);
+        ->execute([$kind, (int)$refId, (string)$code, $paise, $utr ?: null, relay_now(), gmdate('Y-m-d H:i:s', time() + RELAY_WINDOW_MIN * 60)]);
     return $paise;
 }
 function relay_status(PDO $pdo, $code) { relay_install($pdo); $s = $pdo->prepare('SELECT * FROM hv_relay_pending WHERE code=? ORDER BY id DESC LIMIT 1'); $s->execute([$code]); return $s->fetch(PDO::FETCH_ASSOC) ?: null; }
@@ -128,7 +128,7 @@ function relay_try_match(PDO $pdo, $rowId) {
         return null;
     }
     $q = $pdo->prepare("SELECT * FROM hv_relay_pending WHERE status='pending' AND paise=? AND created_at <= ? AND expires_at >= ? ORDER BY id");
-    $q->execute([$m['paise'], date('Y-m-d H:i:s', $at + 120), date('Y-m-d H:i:s', $at - RELAY_GRACE_MIN * 60)]);
+    $q->execute([$m['paise'], gmdate('Y-m-d H:i:s', $at + 120), gmdate('Y-m-d H:i:s', $at - RELAY_GRACE_MIN * 60)]);
     $c = array_values(array_filter($q->fetchAll(PDO::FETCH_ASSOC), function ($o) use ($m) { return !$o['utr'] || !$m['ref'] || $o['utr'] === $m['ref']; }));
     if (count($c) !== 1) { if (count($c) > 1) $pdo->prepare("UPDATE hv_relay_msgs SET note='several orders with this amount: match by hand' WHERE id=?")->execute([$rowId]); return null; }
     return relay_mark_paid($pdo, $c[0], $m) ? $c[0]['code'] : null;

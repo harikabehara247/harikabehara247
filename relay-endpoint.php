@@ -6,7 +6,6 @@ $root = dirname(__DIR__, 2);
 try {
     $c = require $root . '/config.php';
     $pdo = new PDO('mysql:host=' . $c['db_host'] . ';dbname=' . $c['db_name'] . ';charset=utf8mb4', $c['db_user'], $c['db_pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    date_default_timezone_set('Asia/Kolkata');
     require $root . '/ix-core/relay-hooks.php';
     $raw = file_get_contents('php://input', false, null, 0, 20000);
     $h = function_exists('getallheaders') ? getallheaders() : [];
