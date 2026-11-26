@@ -348,7 +348,11 @@ function loop() { const dt = Math.min(.05, clock.getDelta()); T += dt;
     if (p.life > 5 || p.p.y < -2) { p.on = false; tmp.scale.setScalar(0); } else { tmp.position.copy(p.p); tmp.rotation.copy(p.r); tmp.scale.setScalar(1); } tmp.updateMatrix(); conf.setMatrixAt(i, tmp.matrix); }
   conf.instanceMatrix.needsUpdate = true;
   for (let i = smokes.length - 1; i >= 0; i--) { const s = smokes[i], u = s.userData; u.d -= dt; if (u.d > 0) continue; u.life += dt; s.position.addScaledVector(u.v, dt); s.scale.setScalar(.25 + u.life * .9); s.material.opacity = Math.max(0, .6 - u.life * .35); if (u.life > 1.8) { scene.remove(s); smokes.splice(i, 1); } }
-  renderer.render(scene, camera); requestAnimationFrame(loop); }
+  renderer.render(scene, camera); perf(dt); requestAnimationFrame(loop); }
+/* adaptive quality: if a phone can't keep up, drop pixel ratio, then soft shadows */
+let pf = { n: 0, t: 0, lvl: 0 };
+function perf(dt) { if (document.hidden || pf.lvl > 1) return; pf.n++; pf.t += dt; if (pf.n < 90) return; const fps = pf.n / pf.t; pf.n = 0; pf.t = 0;
+  if (fps < 40) { pf.lvl++; if (pf.lvl === 1) { renderer.setPixelRatio(1); fit(); } else { sun.shadow.mapSize.set(512, 512); renderer.shadowMap.type = THREE.PCFShadowMap; sun.shadow.map && (sun.shadow.map.dispose(), sun.shadow.map = null); } } }
 
 new FontLoader().load('./lib/helvetiker_bold.typeface.json', f => { font = f; buildLetters(); const l = $('#load'); l.style.opacity = 0; setTimeout(() => l.remove(), 600); loop(); intro(); },
   undefined, () => { $('#load').textContent = 'Could not load the party. Please refresh.'; });
