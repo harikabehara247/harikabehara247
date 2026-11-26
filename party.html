@@ -129,6 +129,24 @@ img,.bg{-webkit-touch-callout:none;-webkit-user-drag:none}
 .wb{position:absolute;aspect-ratio:.401;background-repeat:no-repeat;background-size:385% auto;cursor:pointer;filter:drop-shadow(0 8px 10px rgba(0,0,0,.35));transform-origin:50% 40%;animation:wbob 3.2s ease-in-out infinite}
 .wb.p{background-position:12% 50.7%}.wb.g{background-position:50% 50.7%}.wb.c{background-position:87.9% 50.7%}
 .wb.pop{animation:popb .3s forwards}@keyframes wbob{50%{transform:translateY(-5px) rotate(2deg)}}
+
+/* r86: each design opens differently */
+.tag{position:relative;width:150px;height:200px;margin:0 auto 22px;transform-origin:50% -60px;animation:tagsw 2.6s ease-in-out infinite;cursor:pointer}
+.tag:before{content:'';position:absolute;left:50%;top:-70px;width:3px;height:78px;margin-left:-1.5px;background:linear-gradient(#e8a7b5,#c9637f)}
+.tag i{position:absolute;inset:0;border-radius:14px 14px 18px 18px;clip-path:polygon(50% 0,100% 18%,100% 100%,0 100%,0 18%);background:linear-gradient(135deg,#8a6a1e,#f7e2a0 25%,#c3922f 50%,#fff3c8 68%,#a37b26);box-shadow:0 20px 40px rgba(0,0,0,.6)}
+.tag i:after{content:'';position:absolute;left:50%;top:14%;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#2a1424;box-shadow:inset 0 2px 3px rgba(0,0,0,.6)}
+.tag b{position:absolute;left:8px;right:8px;top:36%;text-align:center;font:400 30px/1.05 'Great Vibes',cursive;color:#4a3208;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.tag small{position:absolute;left:0;right:0;top:27%;text-align:center;font:700 10px Inter;letter-spacing:.2em;color:#5b4210}
+@keyframes tagsw{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+.start.tagged .switch,.start.lan1 .switch{display:none}
+.onelan{position:relative;width:92px;aspect-ratio:.78;margin:0 auto 26px;cursor:pointer;animation:lsway 3s ease-in-out infinite}
+.onelan:before{content:'';position:absolute;inset:0;border-radius:42% 42% 30% 30%/46% 46% 32% 32%;background:radial-gradient(ellipse at 50% 62%,#fff4c7,#ffc867 28%,#f29a3a 62%,#b85a1c);box-shadow:0 0 50px 18px rgba(255,170,70,.5),0 0 120px 50px rgba(255,150,60,.2);animation:lglow 1.8s ease-in-out infinite alternate}
+.onelan:after{content:'';position:absolute;left:30%;right:30%;bottom:-6%;height:9%;border-radius:2px;background:#6b3a14}
+@keyframes lglow{to{filter:brightness(1.25)}}
+.start.lan1{background:radial-gradient(circle at 50% 42%,#1b2444,#05070f 70%)}
+.start.lan1:before{content:'';position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 85% 55%,#fff,transparent),radial-gradient(1px 1px at 35% 70%,#fff,transparent),radial-gradient(1px 1px at 55% 12%,#fff,transparent),radial-gradient(1.5px 1.5px at 12% 82%,#fff,transparent),radial-gradient(1px 1px at 92% 85%,#fff,transparent);opacity:.8}
+.start.lan1.on .onelan:before{filter:brightness(1.6);box-shadow:0 0 90px 40px rgba(255,190,90,.7)}
+#LS.misty .cap{color:#3a2238;text-shadow:0 1px 0 rgba(255,255,255,.6)}#LS.misty .sub{color:#5a4358;text-shadow:none;max-width:320px;margin-left:auto;margin-right:auto}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
 </style>
 </head>
@@ -291,7 +309,7 @@ function foilRow(box, size, hidden) { box.innerHTML = ''; return nameLetters().m
 function nameSize() { return Math.max(26, Math.min(86, (innerWidth - 28) / (NAME.length * .76))); }
 
 /* 1. Sparkler Night: wipe the misty window, then a sparkler writes her name in light */
-function sparklerOpen() { d.body.classList.add('lit'); bg('bgCake', true); show('LS'); $('#LSc').innerHTML = 'Psst, <i>' + NAME.replace(/</g, '') + '</i>…'; $('#LSs').textContent = 'Wipe the misty window with your finger'; say('Rub the window ✨');
+function sparklerOpen() { d.body.classList.add('lit'); bg('bgCake', true); show('LS'); $('#LS').classList.add('misty'); $('#LSc').innerHTML = 'Psst, <i>' + NAME.replace(/</g, '') + '</i>…'; $('#LSs').textContent = 'Someone left a surprise behind this misty window. Wipe it with your finger!'; say('Rub the window ✨');
   var c = $('#mist'), x = c.getContext('2d'), W, H, rubbing = false, n = 0, done = false;
   function paint() { W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr; var g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, 'rgba(235,228,232,.93)'); g.addColorStop(1, 'rgba(205,195,205,.9)'); x.globalCompositeOperation = 'source-over'; x.fillStyle = g; x.fillRect(0, 0, W, H);
     for (var i = 0; i < 1600; i++) { x.fillStyle = 'rgba(255,255,255,' + Math.random() * .35 + ')'; x.beginPath(); x.arc(Math.random() * W, Math.random() * H, (Math.random() * 2.2 + .4) * dpr, 0, 7); x.fill(); }
@@ -299,7 +317,7 @@ function sparklerOpen() { d.body.classList.add('lit'); bg('bgCake', true); show(
   paint(); c.style.pointerEvents = 'auto';
   function rub(e) { if (!rubbing || done) return; var r = c.getBoundingClientRect(), px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr; x.globalCompositeOperation = 'destination-out'; var g = x.createRadialGradient(px, py, 0, px, py, 46 * dpr); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, 46 * dpr, 0, 7); x.fill();
     if (Math.random() < .25) noise(.08, 3000, .03); if (++n % 10 === 0) { var dd = x.getImageData(0, 0, W, H).data, cl = 0, k = 0; for (var i = 3; i < dd.length; i += 160) { k++; if (dd[i] < 40) cl++; } if (cl / k > .38) clear(); } }
-  function clear() { if (done) return; done = true; say(''); c.style.transition = 'opacity 1.2s'; c.style.opacity = 0; chime(); bg('bgCake', true); later(function () { x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); c.style.transition = ''; c.style.opacity = 1; c.style.pointerEvents = 'none'; writeName(); }, 1300); }
+  function clear() { if (done) return; done = true; say(''); $('#LS').classList.remove('misty'); c.style.transition = 'opacity 1.2s'; c.style.opacity = 0; chime(); bg('bgCake', true); later(function () { x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); c.style.transition = ''; c.style.opacity = 1; c.style.pointerEvents = 'none'; writeName(); }, 1300); }
   c.onpointerdown = function (e) { rubbing = true; try { c.setPointerCapture(e.pointerId); } catch (z) {} rub(e); }; c.onpointermove = rub; c.onpointerup = c.onpointercancel = function () { rubbing = false; };
   if (auto) { var t = 0; var iv = setInterval(function () { rubbing = true; for (var j = 0; j < 30; j++) rub({ clientX: Math.random() * innerWidth, clientY: Math.random() * innerHeight }); if (++t > 14) { clearInterval(iv); clear(); } }, 120); }
 }
@@ -328,7 +346,7 @@ function popwallOpen() { d.body.classList.add('lit'); bg('bgRoom'); show('LW'); 
   $('#wname').style.opacity = 0; say('Pop the balloons! 🎈');
   for (var yy = -bh * .15, r = 0; yy < H; yy += bh * .42, r++) for (var xx = -bw * .3 + (r % 2) * bw * .45; xx < W; xx += bw * .82) { var b = d.createElement('div'); b.className = 'wb ' + k[(r * 7 + Math.round(xx)) % 3]; b.style.width = bw + 'px'; b.style.left = xx + 'px'; b.style.top = yy + 'px'; b.style.zIndex = 8 + r; b.style.animationDelay = (Math.random() * 3) + 's'; b.style.backgroundImage = 'url(' + A + 'inv-bday-08-balloons-cut.webp)'; w.appendChild(b); list.push(b); }
   var total = list.length, finished = false;
-  function popB(b, quiet) { if (b.classList.contains('pop')) return; b.classList.add('pop'); if (!quiet) { pop(); var r = b.getBoundingClientRect(); cannon(r.left + r.width / 2, r.top + r.height * .3, 0, 10); } popped++;
+  function popB(b, quiet) { if (b.classList.contains('pop')) return; b.classList.add('pop'); if (!quiet) startMusic(); if (!quiet) { pop(); var r = b.getBoundingClientRect(); cannon(r.left + r.width / 2, r.top + r.height * .3, 0, 10); } popped++;
     if (!finished && popped / total > .45) { finished = true; say(''); list.forEach(function (o, j) { later(function () { popB(o, j % 4); }, j * 25); }); later(function () { $('#wname').style.opacity = 1; $('#wname').style.transition = 'opacity .6s'; chime(); swell(); cannon(0, H * .9, 1, 80); cannon(W, H * .9, -1, 80); later(function () { say('Tap anywhere ✨'); onTap(act2, 2400); }, 2000); }, list.length * 25 + 300); } }
   w.onpointerdown = function (e) { var b = e.target.closest('.wb'); if (b) popB(b); };
   w.onpointermove = function (e) { if (e.buttons || e.pointerType === 'touch') { var el = d.elementFromPoint(e.clientX, e.clientY); if (el && el.classList.contains('wb')) popB(el); } };
@@ -339,7 +357,15 @@ function first() { if (THEME === 'sparkler') sparklerOpen(); else if (THEME === 
 $('#again').onclick = function (e) { e.stopPropagation(); if (THEME === 'lantern') setBg('bgRoom', 'inv-bday-04-room.webp'); first(); };
 $('#zoom').onclick = function () { this.classList.remove('on'); };
 function begin() { var st = $('#start'); st.classList.add('on'); tone(180, 0, .05, 'square', .08); ac(); if (AC && AC.state === 'suspended') AC.resume(); setTimeout(function () { st.style.transition = 'opacity .6s'; st.style.opacity = 0; setTimeout(function () { st.remove(); }, 600); first(); }, 350); }
-if (auto) { $('#start').remove(); first(); } else $('#start').onclick = begin;
+/* r86: one tap anywhere unlocks sound; each design has its own entrance */
+d.addEventListener('pointerdown', function unlock() { ac(); if (AC && AC.state === 'suspended') AC.resume(); d.removeEventListener('pointerdown', unlock, true); }, true);
+if (auto || THEME === 'sparkler' || THEME === 'popwall') { $('#start').remove(); first(); }
+else {
+  var st0 = $('#start'), inner = st0.firstElementChild;
+  if (THEME === 'lantern') { st0.classList.add('lan1'); inner.insertAdjacentHTML('afterbegin', '<div class="onelan" aria-hidden="true"></div>'); $('#stT').textContent = 'A wish for ' + NAME; inner.querySelector('p').textContent = 'Tap the lantern to light up the night'; }
+  else { st0.classList.add('tagged'); inner.insertAdjacentHTML('afterbegin', '<div class="tag" aria-hidden="true"><i></i><small>TO</small><b></b></div>'); inner.querySelector('.tag b').textContent = NAME; $('#stT').textContent = 'A gift is waiting'; inner.querySelector('p').textContent = 'Tap the gift tag'; }
+  st0.onclick = begin;
+}
 ['inv-bday-02-open', 'inv-bday-04-room', 'inv-bday-05-cake', 'inv-bday-06-games', 'inv-bday-07-dinner', 'inv-bday-08-balloons-cut', 'inv-bday-09-frame-cut'].forEach(function (n) { var im = new Image(); im.src = A + n + '.webp'; });
 })();
 </script>
