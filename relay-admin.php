@@ -50,6 +50,8 @@ $recentPend = $pdo->query("SELECT * FROM hv_relay_pending WHERE status IN ('pend
 $msgs = $pdo->query("SELECT m.*, p.code pcode, p.kind pkind FROM hv_relay_msgs m LEFT JOIN hv_relay_pending p ON p.id=m.pending_id ORDER BY m.id DESC LIMIT 80")->fetchAll(PDO::FETCH_ASSOC);
 $k = $pdo->query("SELECT SUM(status='matched') matched, SUM(status='unmatched') unmatched, COALESCE(SUM(CASE WHEN status='matched' THEN paise END),0) amt FROM hv_relay_msgs WHERE created_at > '" . gmdate('Y-m-d H:i:s', time() - 30 * 86400) . "'")->fetch(PDO::FETCH_ASSOC);
 $stLbl = ['matched' => ['Opened', 'good'], 'unmatched' => ['Needs a look', 'warn'], 'twin' => ['Same payment (app)', 'blue'], 'ignored' => ['Ignored', 'muted'], 'test' => ['Test', 'blue'], 'noamount' => ['No amount', 'warn']];
+adm_head($pdo, 'pay-relay', 'Payment relay');
+adm_page_head('Payment relay', 'Your phone forwards SBI "credited" alerts here. A ₹49 greeting or a plan opens only when a credit with its exact amount (for example ₹49.07) arrives, or when you approve a payment screenshot below.');
 ?>
 <style>
 .prl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px}
@@ -62,7 +64,7 @@ $stLbl = ['matched' => ['Opened', 'good'], 'unmatched' => ['Needs a look', 'warn
 .prl-body{max-width:340px;color:#4b4560;font-size:12px;white-space:pre-wrap}
 .prl-row form{display:inline}
 </style>
-<div class="adm-head"><div><h1>Payment relay</h1><p class="prl-muted">Your phone forwards SBI "credited" alerts here. A ₹49 greeting or a plan opens only when a credit with its exact amount (for example ₹49.07) arrives. Nothing opens on a typed UTR or a screenshot.</p></div></div>
+
 <div class="prl-grid">
   <div class="prl-card"><h3>Relay</h3>
     <p><span class="prl-dot <?= $on ? 'good' : 'bad' ?>"></span><b><?= $on ? 'ON' : 'OFF' ?></b> <span class="prl-muted"><?= $on ? '· unique amounts at checkout, auto-open when paid' : '· payments wait for your Verify' ?></span></p>
@@ -119,3 +121,4 @@ $stLbl = ['matched' => ['Opened', 'good'], 'unmatched' => ['Needs a look', 'warn
       <td class="prl-body"><?= e(mb_substr((string)$m['body'], 0, 220)) ?></td></tr>
   <?php endforeach ?></table><?php endif ?>
 </div>
+<?php adm_foot();
