@@ -18,6 +18,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         adm_flash($ok ? 'success' : 'error', $ok ? 'Matched. The order is paid and opened.' : 'Could not match: the credit or the order is no longer open.');
     }
     if ($do === 'ignore') { $pdo->prepare("UPDATE hv_relay_msgs SET status='ignored', note=? WHERE id=? AND status IN ('unmatched','noamount')")->execute(['ignored by admin', (int)($_POST['msg'] ?? 0)]); adm_flash('success', 'Marked as not an H View payment.'); }
+    if ($do === 'proof_ok' || $do === 'proof_no') {
+        $q = $pdo->prepare("SELECT * FROM hv_ix_orders WHERE id=? AND package='unlock'"); $q->execute([(int)($_POST['order'] ?? 0)]); $o = $q->fetch(PDO::FETCH_ASSOC);
+        if ($o && $o['status'] !== 'paid') {
+            $now = date('Y-m-d H:i:s'); $who = (string)($GLOBALS['ixUser'] ?? ($_SESSION['user_name'] ?? 'admin'));
+            if ($do === 'proof_ok') {
+                $pdo->prepare("UPDATE hv_ix_orders SET payment_status='verified', status='paid', verified_by=?, verified_at=?, updated_at=? WHERE id=?")->execute(['admin (screenshot)', $now, $now, $o['id']]);
+                if (preg_match('/wish:([A-Za-z0-9]{10})/', (string)$o['requirements'], $wm)) $pdo->prepare("UPDATE hv_ix_experiences SET status='active' WHERE token=? AND status='awaiting'")->execute([$wm[1]]);
+                $pdo->prepare("UPDATE hv_relay_pending SET status='paid', paid_at=? WHERE code=? AND status IN ('pending','expired')")->execute([$now, $o['code']]);
+                adm_flash('success', $o['code'] . ' approved: the greeting is open.');
+            } else {
+                $pdo->prepare("UPDATE hv_ix_orders SET payment_status='unpaid', status='awaiting_payment', upi_ref=NULL, upi_ref_at=NULL, notes=REPLACE(COALESCE(notes,''), ' proof:', ' rejected-proof:'), updated_at=? WHERE id=?")->execute([$now, $o['id']]);
+                adm_flash('success', $o['code'] . ' rejected: the greeting stays locked.');
+            }
+            try { $pdo->prepare('INSERT INTO hv_ix_order_log (order_id, action, detail, user_name, created_at) VALUES (?,?,?,?,?)')->execute([$o['id'], $do === 'proof_ok' ? 'payment approved from screenshot' : 'screenshot rejected', 'Payment relay page', 'admin', $now]); } catch (Throwable $e) {}
+            adm_log($pdo, $do === 'proof_ok' ? 'pay_proof_approved' : 'pay_proof_rejected', 'ix_order', (int)$o['id'], $o['code']);
+        }
+    }
     if ($reveal === '') adm_redirect($back);
 }
 relay_expire($pdo);
@@ -69,6 +86,16 @@ $stLbl = ['matched' => ['Opened', 'good'], 'unmatched' => ['Needs a look', 'warn
     <p class="prl-muted" style="margin-top:8px">App endpoint: <b>https://hview.in/api/pay-relay</b> (already filled in the app).</p>
   <?php endif ?>
 </div>
+<?php $proofs = $pdo->query("SELECT id, code, upi_ref, upi_ref_at, notes, agreed_price, created_at FROM hv_ix_orders WHERE package='unlock' AND status='verification_pending' AND notes LIKE '% proof:%' ORDER BY upi_ref_at DESC LIMIT 30")->fetchAll(PDO::FETCH_ASSOC); $pdir = dirname(__DIR__, 2) . '/../hview-private/pay-proofs'; ?>
+<?php if ($proofs): ?><div class="prl-card" style="margin-bottom:16px;border-color:#f2c46d"><h3>Screenshots to check (<?= count($proofs) ?>)</h3>
+  <p class="prl-muted">Open your SBI account or SMS, find a credit with this <b>exact amount</b> at about this time, then approve. If you can't find it, reject: the greeting stays locked.</p>
+  <table class="prl-t"><tr><th>Screenshot</th><th>Order</th><th>Must have received</th><th>UTR typed</th><th>Sent</th><th></th></tr>
+  <?php foreach ($proofs as $o): preg_match_all('/ proof:([A-Za-z0-9._-]+)/', (string)$o['notes'], $pm); $file = end($pm[1]); $path = $file ? realpath($pdir) . '/' . basename($file) : ''; $rsx = relay_status($pdo, $o['code']); ?>
+    <tr><td><?php if ($path && is_file($path)): $mime = preg_match('/\.png$/', $path) ? 'image/png' : (preg_match('/\.webp$/', $path) ? 'image/webp' : 'image/jpeg'); $src = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path)); ?><a href="<?= $src ?>" target="_blank" rel="noopener"><img src="<?= $src ?>" alt="Payment screenshot <?= e($o['code']) ?>" style="width:120px;border-radius:10px;border:1px solid #ddd"></a><?php else: ?>missing<?php endif ?></td>
+      <td><b><?= e($o['code']) ?></b><br><span class="prl-muted">₹49 greeting</span></td><td><b><?= e($rsx ? $rs((int)$rsx['paise']) : '₹' . (int)$o['agreed_price']) ?></b></td><td><?= e($o['upi_ref'] ?: '—') ?></td><td><?= e(substr((string)$o['upi_ref_at'], 5, 11)) ?></td>
+      <td><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="do" value="proof_ok"><input type="hidden" name="order" value="<?= (int)$o['id'] ?>"><button class="adm-btn adm-btn-primary" onclick="return confirm('Money found in the SBI account? This opens the greeting.')">Approve &amp; open</button></form>
+        <form method="post" style="margin-top:6px"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="do" value="proof_no"><input type="hidden" name="order" value="<?= (int)$o['id'] ?>"><button class="adm-btn" onclick="return confirm('Not received? The greeting stays locked.')">Reject</button></form></td></tr>
+  <?php endforeach ?></table></div><?php endif ?>
 <div class="prl-card" style="margin-bottom:16px"><h3>Waiting for payment (<?= count($pend) ?>)</h3>
   <?php if (!$pend): ?><p class="prl-muted">No open orders right now.</p><?php else: ?>
   <table class="prl-t"><tr><th>Order</th><th>What</th><th>Exact amount</th><th>Customer's UTR</th><th>Created</th><th>Expires</th></tr>
