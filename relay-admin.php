@@ -5,6 +5,7 @@
  * Here: phone status, secret key, on/off, open orders, every credit received, manual match. */
 adm_require('pay-relay');
 require_once dirname(__DIR__, 2) . '/ix-core/relay-hooks.php';
+if (is_file(dirname(__DIR__, 2) . '/ix-core/phonepe.php')) require_once dirname(__DIR__, 2) . '/ix-core/phonepe.php';
 relay_install($pdo);
 $back = adm_url('pay-relay'); $reveal = '';
 $ist = function ($utc, $fmt = 'd M H:i') { if (!$utc) return '—'; try { $d = new DateTime(is_numeric($utc) ? '@' . (int)$utc : $utc . ' UTC'); $d->setTimezone(new DateTimeZone('Asia/Kolkata')); return $d->format($fmt); } catch (Throwable $e) { return (string)$utc; } };
@@ -36,6 +37,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             adm_log($pdo, $do === 'proof_ok' ? 'pay_proof_approved' : 'pay_proof_rejected', 'ix_order', (int)$o['id'], $o['code']);
         }
     }
+    if ($do === 'pp_save' && function_exists('pp_install')) {
+        pp_install($pdo);
+        relay_put($pdo, 'pp_on', empty($_POST['pp_on']) ? '0' : '1');
+        relay_put($pdo, 'pp_env', ($_POST['pp_env'] ?? '') === 'sandbox' ? 'sandbox' : 'production');
+        foreach (['pp_client_id' => 80, 'pp_client_version' => 10, 'pp_hook_user' => 40] as $k => $max) { $v = trim((string)($_POST[$k] ?? '')); if ($v !== '') relay_put($pdo, $k, mb_substr($v, 0, $max)); }
+        foreach (['pp_client_secret', 'pp_hook_pass'] as $k) { $v = trim((string)($_POST[$k] ?? '')); if ($v !== '') relay_put($pdo, $k, mb_substr($v, 0, 200)); }
+        relay_put($pdo, 'pp_token', '{}');
+        adm_log($pdo, 'phonepe_settings', 'pay-relay'); adm_flash('success', 'PhonePe settings saved. Tap "Test PhonePe connection" to check the keys.');
+    }
+    if ($do === 'pp_test' && function_exists('pp_token')) { [$t, $err] = pp_token($pdo, true); adm_flash($t ? 'success' : 'error', $t ? 'Connected to PhonePe: the keys work.' : $err); }
     if ($reveal === '') adm_redirect($back);
 }
 relay_expire($pdo);
@@ -79,6 +90,27 @@ adm_page_head('Payment relay', 'Your phone forwards SBI "credited" alerts here. 
     <p class="prl-muted"><?= (int)$k['unmatched'] ?> credit(s) need a look</p>
   </div>
 </div>
+<?php if (function_exists('pp_install')): pp_install($pdo); $ppOn = relay_set($pdo, 'pp_on', '0') === '1'; $ppId = relay_set($pdo, 'pp_client_id', ''); $ppOrders = $pdo->query('SELECT * FROM hv_pg_orders ORDER BY id DESC LIMIT 15')->fetchAll(PDO::FETCH_ASSOC); ?>
+<div class="prl-card" style="margin-bottom:16px"><h3>PhonePe payment gateway · Night Out TTS Pvt Ltd</h3>
+  <p><span class="prl-dot <?= pp_on($pdo) ? 'good' : 'bad' ?>"></span><b><?= pp_on($pdo) ? 'ON' : 'OFF' ?></b> <span class="prl-muted">· <?= e(relay_set($pdo, 'pp_env', 'production')) ?> · buyers pay on PhonePe's page (UPI, cards, net banking) and the order opens only when PhonePe confirms it</span></p>
+  <form method="post" class="prl-ppform"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="do" value="pp_save">
+    <label class="adm-check"><input type="checkbox" name="pp_on" value="1"<?= $ppOn ? ' checked' : '' ?>> Use PhonePe for ₹49 greetings and plans</label>
+    <div class="prl-grid" style="margin-top:10px">
+      <label>Environment<select name="pp_env"><option value="production"<?= relay_set($pdo, 'pp_env', 'production') === 'production' ? ' selected' : '' ?>>Production (live)</option><option value="sandbox"<?= relay_set($pdo, 'pp_env', '') === 'sandbox' ? ' selected' : '' ?>>Sandbox (test keys from PhonePe)</option></select></label>
+      <label>Client ID<input name="pp_client_id" autocomplete="off" placeholder="<?= $ppId !== '' ? e(substr($ppId, 0, 4) . '…' . substr($ppId, -3) . ' (saved)') : 'From Developer Settings' ?>"></label>
+      <label>Client version<input name="pp_client_version" autocomplete="off" placeholder="<?= e(relay_set($pdo, 'pp_client_version', '1')) ?>"></label>
+      <label>Client secret<input name="pp_client_secret" type="password" autocomplete="new-password" placeholder="<?= relay_set($pdo, 'pp_client_secret', '') !== '' ? '•••••• saved (type to replace)' : 'From Developer Settings' ?>"></label>
+      <label>Webhook username<input name="pp_hook_user" autocomplete="off" placeholder="<?= relay_set($pdo, 'pp_hook_user', '') !== '' ? e(relay_set($pdo, 'pp_hook_user', '')) . ' (saved)' : '5–20 letters, digits or _' ?>"></label>
+      <label>Webhook password<input name="pp_hook_pass" type="password" autocomplete="new-password" placeholder="<?= relay_set($pdo, 'pp_hook_pass', '') !== '' ? '•••••• saved' : '8–20, letters and numbers' ?>"></label>
+    </div>
+    <button class="adm-btn adm-btn-primary" style="margin-top:10px">Save PhonePe settings</button></form>
+  <form method="post" style="margin-top:8px"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="do" value="pp_test"><button class="adm-btn">Test PhonePe connection</button></form>
+  <p class="prl-muted" style="margin-top:10px">In the PhonePe Business dashboard › Developer Settings › Webhooks, add <b>https://hview.in/api/phonepe?a=webhook</b> with the same username and password (events: order completed, order failed). Paste keys only here, never in chat or email.</p>
+  <?php if ($ppOrders): ?><table class="prl-t" style="margin-top:10px"><tr><th>When</th><th>Order</th><th>Amount</th><th>PhonePe state</th><th>Transaction</th></tr>
+  <?php foreach ($ppOrders as $g): ?><tr><td><?= e($ist($g['created_at'])) ?></td><td><b><?= e($g['code']) ?></b><br><span class="prl-muted"><?= $g['kind'] === 'plan' ? 'plan' : '₹49 greeting' ?></span></td><td><?= e($rs((int)$g['paise'])) ?></td><td><span class="prl-pill <?= $g['state'] === 'COMPLETED' ? 'good' : ($g['state'] === 'PENDING' ? 'warn' : 'muted') ?>"><?= e($g['state']) ?></span></td><td><?= e($g['txn'] ?: '—') ?></td></tr><?php endforeach ?></table><?php endif ?>
+</div>
+<style>.prl-ppform label{display:block;font-size:13px;color:#4b4560;font-weight:600}.prl-ppform input:not([type=checkbox]),.prl-ppform select{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid #ddd6ee;border-radius:10px;font:inherit}</style>
+<?php endif ?>
 <div class="prl-card" style="margin-bottom:16px"><h3>Secret key for the app</h3>
   <?php if ($reveal !== ''): ?>
     <p class="prl-key"><?= e($reveal) ?></p>
