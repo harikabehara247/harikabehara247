@@ -32,5 +32,5 @@ $GLOBALS['RELAY_UNLOCK']['plan'] = function (PDO $pdo, array $p, array $m) {
 function relay_notify(PDO $pdo, array $o, array $m, $ok) {
     $title = ($ok ? '✅ Paid' : '⚠️ Paid, open by hand') . ' · ₹' . relay_rupees($m['paise']) . ' · ' . $o['code'];
     $body = ($o['kind'] === 'plan' ? 'Membership plan' : 'Single greeting') . ' confirmed by the SBI credit' . ($m['ref'] ? ' Ref ' . $m['ref'] : '') . ($m['payer'] ? ' from ' . $m['payer'] : '') . '.';
-    try { $f = dirname(__DIR__) . '/admin-core/notify.php'; if (is_file($f)) { require_once $f; hv_notify($pdo, 'ix_utr', $title, $body, '/admin/?m=pay-relay'); } } catch (Throwable $e) {}
+    try { $f = dirname(__DIR__) . '/admin-core/notify.php'; if (is_file($f)) { require_once $f; hv_notify($pdo, 'ix_utr', $title, $body, '/admin/?m=dashboard&go=pay-relay'); } } catch (Throwable $e) {}
 }
