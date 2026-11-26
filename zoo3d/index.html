@@ -57,13 +57,14 @@ import { TextGeometry } from './lib/TextGeometry.js';
 let HV = {}; try { HV = JSON.parse(decodeURIComponent(location.hash.slice(1))) || {}; } catch (e) {}
 if (window.HV_DATA) HV = Object.assign({}, window.HV_DATA, HV);
 const NAME = String(HV.to || 'Little Star').trim().slice(0, 12);
-const AGE = Math.max(1, Math.min(9, parseInt(HV.age, 10) || 4));
+const HASAGE = parseInt(HV.age, 10) > 0; const AGE = HASAGE ? Math.max(1, Math.min(12, parseInt(HV.age, 10))) : 5;
 const FROM = String(HV.from || '').trim().slice(0, 60);
 const MSG = String(HV.msg || `Happy birthday, ${NAME}! All your zoo friends came to celebrate you today. Have the most wonderful, giggly, cake-filled day. We love you!`).slice(0, 360);
 const AUTO = HV.autoplay === true;
 const POST = m => { try { parent.postMessage({ hv: m }, '*'); } catch (e) {} };
 const $ = s => document.querySelector(s);
-const ORD = ({ 1: 'st', 2: 'nd', 3: 'rd' })[AGE] || 'th';
+const ORD = (AGE > 10 && AGE < 14) ? 'th' : (({ 1: 'st', 2: 'nd', 3: 'rd' })[AGE % 10] || 'th');
+const HB_T = HASAGE ? 'Happy ' + AGE + ORD + ' birthday' : 'Happy birthday';
 
 /* ------------------------------------------------ renderer + world */
 const canvas = $('#gl');
@@ -179,7 +180,7 @@ tier(1.45, .9, .57, '#ffd6e7'); tier(1.05, .8, 1.42, '#fff6fb'); tier(.7, .1, 1.
 [[1.45, 1.0, '#ff9cc4'], [1.05, 1.8, '#c9b6ff']].forEach(([r, y, c]) => { for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, drip = shadowCatch(new THREE.Mesh(new THREE.CapsuleGeometry(.07, .12 + (i % 3) * .08, 4, 8), toy(c))); drip.position.set(Math.cos(a) * r, y, Math.sin(a) * r); cake.add(drip); } });
 for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, p = S(.06, i % 2 ? '#ffe14d' : '#5ee0c0', 10); p.position.set(Math.cos(a) * 1.47, .25, Math.sin(a) * 1.47); cake.add(p); }
 const candles = [];
-for (let i = 0; i < AGE; i++) { const a = i / AGE * Math.PI * 2 + .3, r = AGE === 1 ? 0 : .42, c = new THREE.Group(); c.position.set(Math.cos(a) * r, 1.9, Math.sin(a) * r);
+for (let i = 0; i < AGE; i++) { const a = i / AGE * Math.PI * 2 + .3, r = AGE === 1 ? 0 : (AGE > 6 ? .58 : .42), c = new THREE.Group(); c.position.set(Math.cos(a) * r, 1.9, Math.sin(a) * r);
   const stick = shadowCatch(new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .55, 16), toy(balloonCols[i % 6]))); stick.position.y = .27; c.add(stick);
   const flame = new THREE.Mesh(new THREE.SphereGeometry(.075, 16, 12), new THREE.MeshBasicMaterial({ color: '#ffd26a' })); flame.scale.set(1, 1.9, 1); flame.position.y = .66; c.add(flame);
   const core = new THREE.Mesh(new THREE.SphereGeometry(.04, 12, 10), new THREE.MeshBasicMaterial({ color: '#fffbe6' })); core.scale.set(1, 1.6, 1); core.position.y = .63; c.add(core);
@@ -233,7 +234,7 @@ canvas.addEventListener('pointerdown', e => { pick(e); });
 
 /* ------------------------------------------------ the animals */
 const makers = [makeElephant, makeGiraffe, makeBunny, makeBear, makeLion];
-const letters = NAME.toUpperCase().replace(/[^A-Z0-9 ]/g, '').split('');
+let letters = NAME.toUpperCase().replace(/[^A-Z0-9 ]/g, '').trim().split(''); if (!letters.length) letters = 'HAPPY DAY'.split('');
 const nLetters = letters.filter(c => c !== ' ').length;
 const animals = makers.map((m, i) => { const a = m(); a.g.visible = false; a.g.scale.setScalar(.01); world.add(a.g); a.i = i; a.jump = 0; a.spin = 0; a.blink = Math.random() * 3; a.dance = 0; return a; });
 const ring = (i, n, r) => { const a = Math.PI * .5 + (i - (n - 1) / 2) * (Math.PI * 1.25 / Math.max(1, n - 1)); return [Math.cos(a) * r, Math.sin(a) * r]; };
@@ -284,17 +285,18 @@ async function balloonsStage() { stage = 'balloons'; POST('step'); camTo([0, 4.6
   if (AUTO) heldBalloons.forEach((b, k) => setTimeout(() => popOne(b), 1400 + k * 550)); }
 
 async function numberStage() { stage = 'number'; POST('step'); pickHandlers = pickHandlers.filter(h => h.obj !== scene); say('');
-  title('Happy ' + AGE + ORD + ' birthday!', NAME + ' is ' + ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][AGE] + ' today 🎉');
-  if (!numberMesh) { const g = new TextGeometry(String(AGE), { font, size: 2.4, depth: .7, curveSegments: 16, bevelEnabled: true, bevelThickness: .25, bevelSize: .14, bevelSegments: 6 }); g.center(); numberMesh = shadowCatch(new THREE.Mesh(g, rose)); scene.add(numberMesh); }
-  numberMesh.visible = true; numberMesh.position.set(0, -3, 0); camTo([0, 4.2, 12], [0, 2.6, 0]); sfx.whoosh();
-  await tween(1.6, t => { numberMesh.position.y = -3 + t * 5.2; numberMesh.rotation.y = (1 - t) * Math.PI * 2; }, ease.back);
+  title(HB_T + '!', HASAGE ? NAME + ' is ' + (['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'][AGE]) + ' today 🎉' : 'Today is all about ' + NAME + ' 🎉');
+  if (HASAGE && !numberMesh) { const g = new TextGeometry(HASAGE ? String(AGE) : (letters.find(ch => ch !== ' ') || 'A'), { font, size: AGE > 9 && HASAGE ? 2 : 2.4, depth: .7, curveSegments: 16, bevelEnabled: true, bevelThickness: .25, bevelSize: .14, bevelSegments: 6 }); g.center(); numberMesh = shadowCatch(new THREE.Mesh(g, rose)); scene.add(numberMesh); }
+  camTo([0, 4.2, 12], [0, 2.6, 0]); sfx.whoosh();
+  if (numberMesh) { numberMesh.visible = true; numberMesh.position.set(0, -3, 0); await tween(1.6, t => { numberMesh.position.y = -3 + t * 5.2; numberMesh.rotation.y = (1 - t) * Math.PI * 2; }, ease.back); } else { await tween(1.2, t => { letterRow.position.y = 4.6 - t * 1.4; }, ease.back); }
   burst(new THREE.Vector3(-3, 1, 1), 90, 7, 3); burst(new THREE.Vector3(3, 1, 1), 90, 7, 3); sfx.chime(); dancing = true;
   say('Tap the animals to make them dance 💃'); pickHandlers.unshift({ obj: world, fn: hit => { let p = hit.object; while (p && !animals.some(a => a.g === p)) p = p.parent; const a = animals.find(z => z.g === p); if (a) bounceAnimal(a); } });
   await wait(AUTO ? 3500 : 5200); dancing = false; cakeStage(); }
 
 async function cakeStage() { stage = 'cake'; POST('step'); pickHandlers = []; say('');
-  tween(.8, t => { numberMesh.position.y = 2.2 + t * 6; numberMesh.scale.setScalar(Math.max(.01, 1 - t)); }, ease.inout).then(() => numberMesh.visible = false);
-  tween(.8, t => { letterRow.position.y = 4.6 + t * 1.2; }, ease.out);
+  if (numberMesh) tween(.8, t => { numberMesh.position.y = 2.2 + t * 6; numberMesh.scale.setScalar(Math.max(.01, 1 - t)); }, ease.inout).then(() => numberMesh.visible = false);
+  const ly0 = letterRow.position.y; tween(.9, t => { letterRow.position.y = ly0 + (10 - ly0) * t; }, ease.inout);
+  { const nar = innerWidth / innerHeight < .75 ? .78 : 1; [[-3.5, .9], [-2.5, -1.4], [0, -2.9], [2.5, -1.4], [3.5, .9]].forEach(([x, z], i) => { const a = animals[i]; if (!a) return; const f = a.g.position.clone(), t = new THREE.Vector3(x * nar, 0, z); a.home = t; tween(1, k => { a.g.position.x = f.x + (t.x - f.x) * k; a.g.position.z = f.z + (t.z - f.z) * k; }, ease.inout); }); }
   cake.visible = true; cake.scale.setScalar(.01); cake.position.set(0, 0, .5); candles.forEach(c => { c.out = false; c.flame.visible = c.core.visible = c.glow.visible = true; c.light.intensity = 0; });
   await tween(1, t => cake.scale.setScalar(Math.max(.01, t)), ease.elastic); camTo([0, 4.2, 8.4], [0, 1.8, 0]);
   candles.forEach((c, i) => setTimeout(() => { c.light.intensity = 2.2; tone(660 + i * 90, 0, .4, 'sine', .05); }, 300 + i * 260));
@@ -315,12 +317,12 @@ async function cakeStage() { stage = 'cake'; POST('step'); pickHandlers = []; sa
 
 async function finale() { stage = 'finale'; POST('step');
   hemi.intensity = .9; sun.intensity = 2.4; skyMat.uniforms.top.value.set('#6ec6ff'); skyMat.uniforms.mid.value.set('#bfe8ff'); skyMat.uniforms.bot.value.set('#ffe3f1');
-  title('Yaaay! 🎉', ''); dancing = true; sfx.fw(); camTo([0, 5.5, 13], [0, 2.4, 0]);
+  title('Yaaay! 🎉', ''); dancing = true; { const ly0 = letterRow.position.y; tween(1.2, t => { letterRow.position.y = ly0 + (4.6 - ly0) * t; }, ease.back); } sfx.fw(); camTo([0, 5.5, 13], [0, 2.4, 0]);
   for (let i = 0; i < 7; i++) setTimeout(() => { burst(new THREE.Vector3((Math.random() - .5) * 8, 1 + Math.random() * 2, (Math.random() - .5) * 3), 90, 8, 4); sfx.fw(); }, i * 500);
-  const dur = song(); $('#cardT').textContent = 'Happy ' + AGE + ORD + ' Birthday, ' + NAME + '!'; $('#cardM').textContent = MSG; $('#cardF').textContent = FROM ? 'with love, ' + FROM : '';
+  const dur = song(); $('#cardT').textContent = HB_T.replace('birthday', 'Birthday') + ', ' + NAME + '!'; $('#cardM').textContent = MSG; $('#cardF').textContent = FROM ? 'with love, ' + FROM : '';
   setTimeout(() => { $('#card').classList.add('on'); title('', ''); }, 1800); setTimeout(() => burst(new THREE.Vector3(0, 3, 0), 220, 10, 6), dur * 1000); POST('done');
   pickHandlers = [{ obj: world, fn: hit => { let p = hit.object; while (p && !animals.some(a => a.g === p)) p = p.parent; const a = animals.find(z => z.g === p); if (a) bounceAnimal(a); } }]; }
-$('#again').onclick = e => { e.stopPropagation(); $('#card').classList.remove('on'); dancing = false; heldBalloons.forEach(b => scene.remove(b)); heldBalloons = []; letterRow.position.y = 4.6; cake.visible = false; pickHandlers = []; intro(); };
+$('#again').onclick = e => { e.stopPropagation(); animals.forEach((a, i) => { const [x, z] = ring(i, animals.length, innerWidth / innerHeight < .75 ? 3.1 : 3.85); a.home = new THREE.Vector3(x, 0, z); a.g.position.copy(a.home); }); $('#card').classList.remove('on'); dancing = false; heldBalloons.forEach(b => scene.remove(b)); heldBalloons = []; letterRow.position.y = 4.6; cake.visible = false; pickHandlers = []; intro(); };
 
 /* ------------------------------------------------ main loop */
 const clock = new THREE.Clock(); let T = 0;

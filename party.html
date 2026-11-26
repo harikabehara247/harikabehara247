@@ -199,7 +199,7 @@ img,.bg{-webkit-touch-callout:none;-webkit-user-drag:none}
 var HV = {}; try { HV = JSON.parse(decodeURIComponent(location.hash.slice(1))) || {}; } catch (e) {}
 if (window.HV_DATA) HV = Object.assign({}, window.HV_DATA, HV);
 var A = HV.assets || '/assets/inv/';
-var NAME = String(HV.to || 'Little Princess').trim().slice(0, 14), AGE = Math.max(1, Math.min(12, parseInt(HV.age, 10) || 4));
+var NAME = String(HV.to || 'Little Star').trim().slice(0, 14), HASAGE = parseInt(HV.age, 10) > 0, AGE = HASAGE ? Math.max(1, Math.min(12, parseInt(HV.age, 10))) : 5;
 var FROM = String(HV.from || '').trim().slice(0, 60);
 var MSG = String(HV.msg || ('Our dearest ' + NAME + ', you fill our home with laughter, cuddles and a hundred little questions every day. May this year bring you twirls, stories, new friends and the biggest smiles. We love you more than all the stars in the sky.')).slice(0, 420);
 var PHOTOS = (HV.photos && HV.photos.length ? HV.photos : (HV.photo ? [HV.photo] : [])).slice(0, 6);
@@ -275,8 +275,8 @@ function act1() { bg('bgRoom', true); show('L1'); startMusic(); var box = $('#na
     b.style.backgroundImage = 'url(' + A + 'inv-bday-08-balloons-cut.webp)'; b.addEventListener('pointerdown', popIt); rbs.appendChild(b); if (auto) later(popIt, 2400 + i * 420); });
   say('Tap the balloons 🎈'); }
 
-function act2() { bg('bgRoom', true); show('L2'); var b = $('#big4'); b.classList.remove('in'); b.innerHTML = foilText(String(AGE), Math.min(innerHeight * .42, innerWidth * .62), 'gRose'); void b.offsetWidth; later(function () { b.classList.add('in'); swell(); }, 100);
-  $('#L2c').innerHTML = 'Our princess is <i>' + WORD + '</i>!'; $('#L2s').textContent = 'Happy ' + AGE + ORD + ' birthday, ' + NAME;
+function act2() { bg('bgRoom', true); show('L2'); var b = $('#big4'); b.classList.remove('in'); b.innerHTML = foilText(HASAGE ? String(AGE) : '★', Math.min(innerHeight * .42, innerWidth * .62), 'gRose'); void b.offsetWidth; later(function () { b.classList.add('in'); swell(); }, 100);
+  $('#L2c').innerHTML = HASAGE ? 'Our little star is <i>' + WORD + '</i>!' : 'It\'s a <i>big</i> day!'; $('#L2s').textContent = (HASAGE ? 'Happy ' + AGE + ORD + ' birthday, ' : 'Happy birthday, ') + NAME;
   later(function () { cannon(innerWidth * .5, innerHeight, 0, 120); chime(); }, 2000);
   later(function () { say(PHOTOS.length ? 'Tap to see the memories 📷' : 'Tap for the cake 🎂'); onTap(PHOTOS.length ? act3 : act4, 2400); }, 3400); }
 
@@ -299,7 +299,7 @@ function act4() { bg('bgCake'); show('L4'); $('#L4n').textContent = NAME; sparkO
     if (hold >= 1) { done = true; sparkOn = 0; noise(.6, 700, .3); $('#bgCake').classList.add('dim'); later(act5, 1300); return; } requestAnimationFrame(step); })(last);
   say(''); if (auto) { later(function () { holding = true; }, 1500); } }
 
-function act5() { bg('bgRoom', true); show('L5'); $('#L5a').textContent = 'Happy ' + AGE + ORD + ' Birthday'; $('#L5n').textContent = NAME; $('#L5m').textContent = MSG; $('#L5f').textContent = FROM ? 'with love, ' + FROM : '';
+function act5() { bg('bgRoom', true); show('L5'); $('#L5a').textContent = HASAGE ? 'Happy ' + AGE + ORD + ' Birthday' : 'Happy Birthday'; $('#L5n').textContent = NAME; $('#L5m').textContent = MSG; $('#L5f').textContent = FROM ? 'with love, ' + FROM : '';
   if (music) music.volume = .15; var t = song(), k = 0; (function shot() { cannon(innerWidth * (k % 2 ? .1 : .9), innerHeight * .95, k % 2 ? 1 : -1, 60); if (++k < 6) later(shot, 900); })(); later(function () { cannon(innerWidth / 2, innerHeight, 0, 160); if (music) music.volume = .35; }, t * 1000); POST('done'); }
 
 /* ================= r85 openings ================= */

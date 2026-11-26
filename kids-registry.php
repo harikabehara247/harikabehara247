@@ -1,0 +1,7 @@
+/* r88 (26 Nov 2026): kids' premium birthday designs (packaged pages, assets/ixpack/birthday--<key>/) */
+$R['products']['birthday']['designs']['zoo3d'] = ['name' => '3D Toy Zoo Party', 'desc' => 'A live 3D world for little ones: baby animals jump out of a gift, pop their balloons to spell the name, then blow out a real 3D cake.', 'tier' => 'premium'];
+$R['products']['birthday']['designs']['kidroyal'] = ['name' => 'Little Royal Party', 'desc' => 'A gold gift tag, a real party room, balloons that pop to reveal the name in gold foil, photo frames and a sparkler cake to blow out.', 'tier' => 'premium'];
+$R['products']['birthday']['designs']['kidpopwall'] = ['name' => 'Balloon Wall Surprise', 'desc' => 'A whole wall of real balloons to pop, a rose-gold age balloon, memories in gold frames and a cake with candles to blow out.', 'tier' => 'premium'];
+$R['products']['birthday']['designs']['kidsparkler'] = ['name' => 'Sparkler Name Party', 'desc' => 'Wipe the misty window and a sparkler writes the name in light, then the age rises in rose gold and the cake waits for a wish.', 'tier' => 'premium'];
+$R['products']['birthday']['designs']['kidlantern'] = ['name' => 'Wish Lantern Night', 'desc' => 'Tap glowing lanterns at a magical night party to light up each letter of the name, then make a wish over the cake.', 'tier' => 'premium'];
+$R['products']['birthday']['picks'] = ['zoo3d', 'goldbox', 'kidroyal'];
