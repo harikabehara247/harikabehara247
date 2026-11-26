@@ -229,7 +229,7 @@ const title = (t, s) => { const a = $('#title'), b = $('#sub'); a.classList.remo
 /* ------------------------------------------------ picking */
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let pickHandlers = [];
 function pick(e) { const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
-  for (const h of pickHandlers) { const hit = ray.intersectObject(h.obj, true)[0]; if (hit) { h.fn(hit); return true; } } return false; }
+  for (const h of pickHandlers) { const hits = ray.intersectObject(h.obj, true); const hit = hits.find(x => { let o = x.object; while (o) { if (animals.some(a => a.g === o) || heldBalloons.includes(o) || o === gift) return true; o = o.parent; } return false; }) || hits[0]; if (hit) { h.fn(hit); return true; } } return false; }
 canvas.addEventListener('pointerdown', e => { pick(e); });
 
 /* ------------------------------------------------ the animals */
@@ -254,7 +254,7 @@ function buildLetters() { letterRow.clear(); letterMeshes.length = 0; const size
 let stage = 'intro', heldBalloons = [], numberMesh = null, dancing = false;
 async function intro() { stage = 'gift'; POST('step');
   gift.visible = true; gift.scale.setScalar(.01); lid.position.set(0, 1.72, 0); lid.rotation.set(0, 0, 0); cake.visible = false; letterMeshes.forEach(m => m.visible = false);
-  if (numberMesh) { numberMesh.visible = false; } animals.forEach(a => { a.g.visible = false; a.g.scale.setScalar(.01); });
+  if (numberMesh) { numberMesh.visible = false; } animals.forEach(a => { a.g.visible = false; a.ready = false; a.g.scale.setScalar(.01); });
   camPos.set(0, 9, 19); camTo([0, 3.8, 10.5], [0, 1.1, 0]);
   await tween(1.2, t => gift.scale.setScalar(Math.max(.01, t)), ease.elastic);
   title('A surprise for ' + NAME + '!', 'Something is wiggling inside the gift…'); say('Tap the gift 🎁');
@@ -263,7 +263,7 @@ async function intro() { stage = 'gift'; POST('step');
     burst(new THREE.Vector3(0, 2, 0), 160, 8, 5); sfx.chime();
     tween(.6, t => gift.scale.set(1 + Math.sin(t * Math.PI) * .12, 1 - Math.sin(t * Math.PI) * .1, 1 + Math.sin(t * Math.PI) * .12), ease.out);
     for (const a of animals) { a.g.visible = true; a.g.position.set(0, 1.6, 0); const from = new THREE.Vector3(0, 1.6, 0); sfx.boing();
-      tween(.9, t => { a.g.position.lerpVectors(from, a.home, t); a.g.position.y += Math.sin(t * Math.PI) * 3; a.g.scale.setScalar(Math.max(.01, t)); a.g.rotation.y = (1 - t) * 6 + Math.atan2(-a.home.x, 9 - a.home.z); }, ease.out);
+      tween(.9, t => { a.g.position.lerpVectors(from, a.home, t); a.g.position.y += Math.sin(t * Math.PI) * 3; a.g.scale.setScalar(Math.max(.01, t)); a.g.rotation.y = (1 - t) * 6 + Math.atan2(-a.home.x, 9 - a.home.z); }, ease.out).then(() => { a.ready = true; });
       await wait(380); }
     await wait(700); tween(.9, t => { gift.scale.setScalar(1 - t); lid.scale.setScalar(Math.max(.01, 1 - t)); }, ease.inout).then(() => gift.visible = false);
     balloonsStage(); };
@@ -329,7 +329,7 @@ const clock = new THREE.Clock(); let T = 0;
 function loop() { const dt = Math.min(.05, clock.getDelta()); T += dt;
   for (let i = tw.length - 1; i >= 0; i--) { const k = tw[i]; k.t += dt; if (k.t < 0) continue; const p = Math.min(1, k.t / k.d); k.fn(k.e(p)); if (p >= 1) { tw.splice(i, 1); k.res(); } }
   const PK = camera.aspect < .75 ? 1.5 : 1; const gp = camGoalL.clone().add(camGoalP.clone().sub(camGoalL).multiplyScalar(PK)); camPos.lerp(gp, 1 - Math.pow(.02, dt)); camLook.lerp(camGoalL, 1 - Math.pow(.02, dt)); camera.position.copy(camPos); camera.position.x += Math.sin(T * .25) * .35; camera.lookAt(camLook);
-  animals.forEach((a, i) => { if (!a.g.visible || a.g.scale.x < .99) return; const ph = T * 2.2 + i;
+  animals.forEach((a, i) => { if (!a.g.visible || !a.ready) return; const ph = T * 2.2 + i;
     let y = 0, sq = 1;
     if (a.jump > 0) { a.jump = Math.max(0, a.jump - dt * 1.6); const j = 1 - a.jump; y = Math.sin(j * Math.PI) * 1.4; sq = 1 + Math.sin(j * Math.PI * 2) * .08; }
     else if (dancing) { y = Math.abs(Math.sin(ph * 1.6)) * .45; sq = 1 + Math.sin(ph * 3.2) * .06; }
