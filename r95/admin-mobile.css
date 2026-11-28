@@ -20,7 +20,7 @@
   table.hv-cards td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; line-height: 1.4; color: #857f99; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
   table.hv-cards td.hv-main { flex: 1 1 calc(100% - 44px); font-size: 15px; font-weight: 600; }
   table.hv-cards td.hv-main::before { display: none; }
-  table.hv-cards td.hv-main * { white-space: normal !important; max-width: none !important; text-overflow: clip !important; }
+  table.hv-cards td.hv-main * { white-space: normal !important; max-width: none !important; text-overflow: clip !important; -webkit-line-clamp: unset !important; line-clamp: none !important; max-height: none !important; height: auto !important; overflow: visible !important; }
   table.hv-cards td.hv-check { flex: 0 0 24px; }
   table.hv-cards td.hv-act { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px; }
   table.hv-cards td.hv-act::before { display: none; }
