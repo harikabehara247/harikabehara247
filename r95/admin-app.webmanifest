@@ -1,0 +1,23 @@
+{
+  "id": "/admin/",
+  "name": "H View Admin",
+  "short_name": "HV Admin",
+  "description": "H View Control Center: chats, orders, billing and articles.",
+  "start_url": "/admin/?app=1",
+  "scope": "/admin/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f6fb",
+  "theme_color": "#3730a3",
+  "icons": [
+    { "src": "/assets/admin-app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/admin-app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/admin-app/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Live chat", "url": "/admin/?m=dashboard&go=wa-inbox", "icons": [{ "src": "/assets/admin-app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Billing", "url": "/admin/?m=dashboard&go=billing", "icons": [{ "src": "/assets/admin-app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Payment check", "url": "/admin/?m=dashboard&go=pay-relay", "icons": [{ "src": "/assets/admin-app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "New article", "url": "/admin/?m=articles&a=new", "icons": [{ "src": "/assets/admin-app/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -1,0 +1,53 @@
+/* H View admin: phone layout (r95, 28 Nov 2026). Loaded after the admin styles; only affects screens up to 760px. */
+@media (max-width: 760px) {
+  html, body { overflow-x: clip; }
+  body.adm { -webkit-text-size-adjust: 100%; }
+  /* the profile menu sat off the right edge and widened every page */
+  .adm-dd-menu { left: auto !important; right: 0 !important; max-width: calc(100vw - 16px); }
+  /* no zoom-on-focus, bigger tap targets */
+  .adm input:not([type=checkbox]):not([type=radio]), .adm select, .adm textarea { font-size: 16px !important; }
+  .adm button, .adm .adm-btn, .adm .bl-btn { min-height: 40px; }
+  .adm-main { padding-left: 12px !important; padding-right: 12px !important; }
+  .adm img, .adm video, .adm iframe { max-width: 100%; }
+  .adm pre, .adm code { white-space: pre-wrap; word-break: break-word; }
+
+  /* list tables become cards (hv-cards is added by admin-mobile.js, which also writes the column names) */
+  table.hv-cards { display: block; width: 100% !important; min-width: 0 !important; border: 0; }
+  table.hv-cards thead, table.hv-cards tr.hv-head { display: none !important; }
+  table.hv-cards tbody { display: block; }
+  table.hv-cards tr { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-start; padding: 12px 14px; border-bottom: 1px solid #ece8f5; background: #fff; position: relative; }
+  table.hv-cards td, table.hv-cards th { display: block; flex: 1 1 calc(50% - 14px); min-width: 0; padding: 0 !important; border: 0 !important; text-align: left !important; white-space: normal !important; overflow-wrap: anywhere; font-size: 14px; }
+  table.hv-cards td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; line-height: 1.4; color: #857f99; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  table.hv-cards td.hv-main { flex: 1 1 calc(100% - 44px); font-size: 15px; font-weight: 600; }
+  table.hv-cards td.hv-main::before { display: none; }
+  table.hv-cards td.hv-main * { white-space: normal !important; max-width: none !important; text-overflow: clip !important; }
+  table.hv-cards td.hv-check { flex: 0 0 24px; }
+  table.hv-cards td.hv-act { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+  table.hv-cards td.hv-act::before { display: none; }
+  table.hv-cards td.hv-empty { display: none; }
+  table.hv-cards td[colspan] { flex: 1 1 100%; }
+  .adm-table-wrap { overflow-x: visible !important; }
+
+  /* Billing */
+  .bl-tabs { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .bl-tabs::-webkit-scrollbar { display: none; }
+  .bl-tabs a { flex: 0 0 auto; }
+  .bl-tabs a[style*="margin-left:auto"] { margin-left: 0 !important; }
+  .bl-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .bl-grid .bl-card { padding: 12px; margin: 0; }
+  .bl-k { font-size: 20px !important; }
+  .bl-f { grid-template-columns: 1fr !important; }
+  .bl-frame { height: 640px; }
+  .bl-it, .bl-it tbody { display: block; } .bl-it tr { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; border-bottom: 1px solid #eee; }
+  .bl-it tr:first-child { display: none; } .bl-it td { padding: 0 !important; } .bl-it td:first-child { flex: 1 1 100%; }
+
+  /* page headers and action rows */
+  .adm-page-head, .adm-page-head > div { flex-wrap: wrap; gap: 10px; }
+  .adm-page-head h1 { font-size: 24px; }
+  .adm-tabs, .adm-filters, .adm-toolbar { flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 380px) {
+  .bl-grid { grid-template-columns: 1fr !important; }
+}
+/* installed app (standalone): leave room for the phone status bar */
+@media (display-mode: standalone) { .adm-top { padding-top: env(safe-area-inset-top); } }
