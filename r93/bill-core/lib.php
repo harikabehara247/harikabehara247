@@ -36,7 +36,7 @@ function bill_put(PDO $pdo, $k, $v) { relay_put($pdo, $k, $v); }
 function bill_install(PDO $pdo) {
     static $done = false; if ($done) return; $done = true;
     if (bill_get($pdo, 'bill_schema', '') === '1') return;
-    $T = ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
+    $T = ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
     $pdo->exec("CREATE TABLE IF NOT EXISTS hv_bill_clients (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(120) NOT NULL, company VARCHAR(160) NULL,
         email VARCHAR(160) NULL, phone VARCHAR(20) NULL, address TEXT NULL, gstin VARCHAR(20) NULL, notes TEXT NULL,

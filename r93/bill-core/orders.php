@@ -10,8 +10,8 @@ function bill_sync(PDO $pdo) {
     static $done = false; if ($done) return; $done = true;
     /* ₹49 unlocks and other greeting orders (times stored in UTC) */
     try {
-        $q = $pdo->query("SELECT o.*, (SELECT p.paise FROM hv_relay_pending p WHERE p.code=o.code AND p.status='paid' ORDER BY p.id DESC LIMIT 1) rp FROM hv_ix_orders o
-            WHERE (o.status='paid' OR o.payment_status='verified') AND NOT EXISTS (SELECT 1 FROM hv_bill_payments b WHERE b.source='ix' AND b.source_id=CONCAT('x', o.id))");
+        $q = $pdo->query("SELECT o.*, (SELECT p.paise FROM hv_relay_pending p WHERE p.code COLLATE utf8mb4_unicode_ci = o.code COLLATE utf8mb4_unicode_ci AND p.status='paid' ORDER BY p.id DESC LIMIT 1) rp FROM hv_ix_orders o
+            WHERE (o.status='paid' OR o.payment_status='verified') AND NOT EXISTS (SELECT 1 FROM hv_bill_payments b WHERE b.source='ix' AND b.source_id COLLATE utf8mb4_unicode_ci = CONCAT('x', o.id) COLLATE utf8mb4_unicode_ci)");
         foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $o) {
             $amt = $o['rp'] ? (int)$o['rp'] : (int)round((float)($o['agreed_price'] ?: $o['est_price']) * 100); if ($amt <= 0) continue;
             bill_pay_add($pdo, ['received_on' => bill_ist_date($o['verified_at'] ?: $o['updated_at']), 'amount' => $amt, 'method' => 'upi', 'source' => 'ix', 'source_id' => 'x' . $o['id'],
@@ -21,9 +21,9 @@ function bill_sync(PDO $pdo) {
     } catch (Throwable $e) {}
     /* membership plans (times stored in IST) */
     try {
-        $q = $pdo->query("SELECT u.*, m.name mname, m.email memail, (SELECT p.paise FROM hv_relay_pending p WHERE p.code=u.code AND p.kind='plan' AND p.status='paid' ORDER BY p.id DESC LIMIT 1) rp
+        $q = $pdo->query("SELECT u.*, m.name mname, m.email memail, (SELECT p.paise FROM hv_relay_pending p WHERE p.code COLLATE utf8mb4_unicode_ci = u.code COLLATE utf8mb4_unicode_ci AND p.kind='plan' AND p.status='paid' ORDER BY p.id DESC LIMIT 1) rp
             FROM hv_member_upgrades u LEFT JOIN hv_members m ON m.id=u.member_id
-            WHERE u.status IN ('active','provisional') AND COALESCE(u.source,'')<>'manual-bill' AND NOT EXISTS (SELECT 1 FROM hv_bill_payments b WHERE b.source='plan' AND b.source_id=CONCAT('p', u.id))");
+            WHERE u.status IN ('active','provisional') AND COALESCE(u.source,'')<>'manual-bill' AND NOT EXISTS (SELECT 1 FROM hv_bill_payments b WHERE b.source='plan' AND b.source_id COLLATE utf8mb4_unicode_ci = CONCAT('p', u.id) COLLATE utf8mb4_unicode_ci)");
         foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $o) {
             $amt = $o['rp'] ? (int)$o['rp'] : (int)round((float)($o['paid_amount'] ?: $o['amount']) * 100); if ($amt <= 0) continue;
             bill_pay_add($pdo, ['received_on' => bill_ist_date($o['paid_on'] ?: ($o['verified_at'] ?: $o['updated_at']), false), 'amount' => $amt, 'method' => 'upi', 'source' => 'plan', 'source_id' => 'p' . $o['id'],
