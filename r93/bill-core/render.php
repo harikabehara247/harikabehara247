@@ -125,7 +125,7 @@ table.li .t{font-weight:600}table.li .d{color:var(--sub);font-size:12.5px;margin
     </dl></div>
     <div><div class="k"><?= $isQ ? 'Quoted total' : ($isPaid ? 'Amount paid' : 'Amount due') ?></div>
       <div class="big <?= $isPaid ? 'zero' : '' ?>"><?= bill_rs($isQ ? $d['total'] : ($isPaid ? $d['paid'] : $due)) ?></div>
-      <?php if ($isPaid && $d['paid_at']): ?><div class="ex" style="color:var(--mut);font-size:12px">Paid on <?= bill_h(bill_ist($d['paid_at'], 'd M Y')) ?></div><?php endif; ?></div>
+      <?php $lastPay = $pays ? end($pays)['received_on'] : null; if ($isPaid && ($lastPay || $d['paid_at'])): ?><div class="ex" style="color:var(--mut);font-size:12px">Paid on <?= bill_h($lastPay ? bill_date($lastPay, 'd M Y') : bill_ist($d['paid_at'], 'd M Y')) ?></div><?php endif; ?></div>
   </div>
 
   <?php if ($d['site'] || $d['subject']): ?><div class="re"><?= $d['subject'] ? '<b>Re:</b> ' . bill_h($d['subject']) : '' ?><?= $d['site'] ? ($d['subject'] ? ' · ' : '<b>Project:</b> ') . bill_h($d['site']) : '' ?></div><?php endif; ?>
