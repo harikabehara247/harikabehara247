@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pill = function ($st) use ($stInv) { [$l, $c] = $stInv[$st] ?? [$st, 'muted']; return '<span class="bl-pill ' . $c . '">' . bill_h($l) . '</span>'; };
 $unmatched = $pdo->query("SELECT * FROM hv_relay_msgs WHERE status IN ('unmatched') AND paise IS NOT NULL ORDER BY id DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
 adm_head($pdo, 'billing', 'Billing');
-adm_page_head('Billing', 'Invoices, quotes and every payment H View receives, in one place. Customers get a link with a UPI QR for the exact amount; bank credits from your phone are matched to invoices.');
+adm_page_head('Billing', 'Invoices, quotes and every payment H View receives, in one place. Each invoice has its own link to share; payments your phone sees arriving are matched to invoices.');
 $tabs = ['home' => 'Overview', 'invoices' => 'Invoices', 'quotes' => 'Quotes', 'payments' => 'Payments register', 'orders' => 'Manual orders', 'clients' => 'Clients', 'settings' => 'Settings'];
 ?>
 <style>
